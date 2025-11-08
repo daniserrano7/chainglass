@@ -1,5 +1,6 @@
 import type { WatchedAddress } from "../types";
 import type { Network } from "../types/network";
+import type { TokenWithNetwork } from "../types/token";
 
 /**
  * LocalStorage keys
@@ -269,4 +270,136 @@ export function getCustomNetworkById(id: string): Network | undefined {
 export function clearCustomNetworks(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEYS.CUSTOM_NETWORKS);
+}
+
+/**
+ * Get all custom tokens from localStorage
+ */
+export function getCustomTokens(): TokenWithNetwork[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_TOKENS);
+    if (!stored) return [];
+
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error("Failed to load custom tokens:", error);
+    return [];
+  }
+}
+
+/**
+ * Save custom tokens to localStorage
+ */
+export function saveCustomTokens(tokens: TokenWithNetwork[]): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.setItem(
+      STORAGE_KEYS.CUSTOM_TOKENS,
+      JSON.stringify(tokens)
+    );
+  } catch (error) {
+    console.error("Failed to save custom tokens:", error);
+  }
+}
+
+/**
+ * Add a new custom token
+ */
+export function addCustomToken(token: TokenWithNetwork): void {
+  const tokens = getCustomTokens();
+
+  // Check for duplicates by address and network
+  const exists = tokens.some(
+    (t) =>
+      t.address.toLowerCase() === token.address.toLowerCase() &&
+      t.networkId === token.networkId
+  );
+
+  if (exists) {
+    throw new Error(
+      `Token at address ${token.address} already exists on network ${token.networkId}`
+    );
+  }
+
+  // Mark as custom
+  const customToken = { ...token, isCustom: true };
+  tokens.push(customToken);
+  saveCustomTokens(tokens);
+}
+
+/**
+ * Remove a custom token by address and network
+ */
+export function removeCustomToken(address: string, networkId: string): void {
+  const tokens = getCustomTokens();
+  const filtered = tokens.filter(
+    (t) =>
+      !(
+        t.address.toLowerCase() === address.toLowerCase() &&
+        t.networkId === networkId
+      )
+  );
+  saveCustomTokens(filtered);
+}
+
+/**
+ * Get custom tokens for a specific network
+ */
+export function getCustomTokensForNetwork(networkId: string): TokenWithNetwork[] {
+  const tokens = getCustomTokens();
+  return tokens.filter((t) => t.networkId === networkId);
+}
+
+/**
+ * Update a custom token
+ */
+export function updateCustomToken(
+  address: string,
+  networkId: string,
+  updates: Partial<TokenWithNetwork>
+): void {
+  const tokens = getCustomTokens();
+  const index = tokens.findIndex(
+    (t) =>
+      t.address.toLowerCase() === address.toLowerCase() &&
+      t.networkId === networkId
+  );
+
+  if (index === -1) {
+    throw new Error(
+      `Token at address ${address} on network ${networkId} not found`
+    );
+  }
+
+  tokens[index] = { ...tokens[index], ...updates };
+  saveCustomTokens(tokens);
+}
+
+/**
+ * Clear all custom tokens (for testing)
+ */
+export function clearCustomTokens(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(STORAGE_KEYS.CUSTOM_TOKENS);
+}
+
+/**
+ * Get tokens grouped by network
+ */
+export function getCustomTokensByNetwork(): Record<string, TokenWithNetwork[]> {
+  const tokens = getCustomTokens();
+  const grouped: Record<string, TokenWithNetwork[]> = {};
+
+  tokens.forEach((token) => {
+    if (!grouped[token.networkId]) {
+      grouped[token.networkId] = [];
+    }
+    grouped[token.networkId].push(token);
+  });
+
+  return grouped;
 }
