@@ -1,0 +1,101 @@
+.network-section {
+  margin-bottom: 1.5rem;
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.network-header {
+  padding: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.network-header:hover {
+  background-color: rgba(100, 108, 255, 0.05);
+}
+
+.network-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.network-name {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.network-total {
+  display: flex;
+  align-items: center;
+}
+
+.total-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--success-color);
+}
+
+.loading-text {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.error-text {
+  font-size: 0.95rem;
+  color: var(--error-color);
+}
+
+.expand-icon {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.network-content {
+  padding: 0 1.25rem 1.25rem 1.25rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.network-error {
+  padding: 1.5rem 1.25rem;
+  background-color: rgba(248, 113, 113, 0.1);
+  border-top: 1px solid var(--border-color);
+}
+
+.network-error p {
+  margin: 0.5rem 0;
+  color: var(--error-color);
+}
+
+.error-details {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .network-header {
+    padding: 1rem;
+  }
+
+  .network-name {
+    font-size: 1.1rem;
+  }
+
+  .total-value {
+    font-size: 1rem;
+  }
+
+  .network-content {
+    padding: 0 1rem 1rem 1rem;
+  }
+}
