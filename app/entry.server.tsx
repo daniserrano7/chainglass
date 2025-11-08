@@ -20,7 +20,7 @@ export default function handleRequest(
         onShellReady() {
           shellRendered = true;
           const body = new ReadableStream({
-            start(controller) {
+            start(controller: ReadableStreamDefaultController<Uint8Array>) {
               pipe({
                 write(chunk: Uint8Array) {
                   controller.enqueue(chunk);
