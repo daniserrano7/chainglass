@@ -11,10 +11,10 @@ import {
   removeWatchedAddress,
   updateLastScanned,
   generateAddressId,
-  scanAddressComplete,
   aggregatePortfolio,
   getEnabledNetworks,
 } from "~/lib/services";
+import { scanAddressFromServer } from "~/lib/services/scanner-server";
 
 export const meta: MetaFunction = () => {
   return [
@@ -62,7 +62,8 @@ export default function Index() {
 
   const scanAddress = async (
     watchedAddress: WatchedAddress,
-    showProgress: boolean = true
+    showProgress: boolean = true,
+    forceRefresh: boolean = false
   ) => {
     try {
       const networks = getEnabledNetworks();
@@ -79,8 +80,8 @@ export default function Index() {
         });
       }
 
-      // Scan the address
-      const portfolio = await scanAddressComplete(
+      // Scan the address using server-side cache
+      const portfolio = await scanAddressFromServer(
         watchedAddress.id,
         watchedAddress.address,
         watchedAddress.label,
@@ -104,7 +105,8 @@ export default function Index() {
               };
             });
           }
-        }
+        },
+        forceRefresh
       );
 
       // Update portfolio in state
@@ -184,7 +186,7 @@ export default function Index() {
     setError(null);
 
     try {
-      await scanAddress(watchedAddress, true);
+      await scanAddress(watchedAddress, true, true); // Force refresh on manual rescan
     } catch (err) {
       console.error("Failed to rescan address:", err);
       setError(
