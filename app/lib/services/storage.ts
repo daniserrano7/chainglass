@@ -1,4 +1,5 @@
 import type { WatchedAddress } from "../types";
+import type { Network } from "../types/network";
 
 /**
  * LocalStorage keys
@@ -7,6 +8,7 @@ const STORAGE_KEYS = {
   WATCHED_ADDRESSES: "chainglass:watchedAddresses",
   ENABLED_NETWORKS: "chainglass:enabledNetworks",
   CUSTOM_TOKENS: "chainglass:customTokens",
+  CUSTOM_NETWORKS: "chainglass:customNetworks",
 } as const;
 
 /**
@@ -169,4 +171,102 @@ export function saveEnabledNetworks(
   } catch (error) {
     console.error("Failed to save enabled networks:", error);
   }
+}
+
+/**
+ * Get all custom networks from localStorage
+ */
+export function getCustomNetworks(): Network[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_NETWORKS);
+    if (!stored) return [];
+
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error("Failed to load custom networks:", error);
+    return [];
+  }
+}
+
+/**
+ * Save custom networks to localStorage
+ */
+export function saveCustomNetworks(networks: Network[]): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.setItem(
+      STORAGE_KEYS.CUSTOM_NETWORKS,
+      JSON.stringify(networks)
+    );
+  } catch (error) {
+    console.error("Failed to save custom networks:", error);
+  }
+}
+
+/**
+ * Add a new custom network
+ */
+export function addCustomNetwork(network: Network): void {
+  const networks = getCustomNetworks();
+
+  // Check for duplicates by ID or chainId
+  const exists = networks.some(
+    (n) => n.id === network.id || n.chainId === network.chainId
+  );
+
+  if (exists) {
+    throw new Error(
+      `Network with ID "${network.id}" or chain ID ${network.chainId} already exists`
+    );
+  }
+
+  networks.push(network);
+  saveCustomNetworks(networks);
+}
+
+/**
+ * Remove a custom network by ID
+ */
+export function removeCustomNetwork(id: string): void {
+  const networks = getCustomNetworks();
+  const filtered = networks.filter((n) => n.id !== id);
+  saveCustomNetworks(filtered);
+}
+
+/**
+ * Update a custom network
+ */
+export function updateCustomNetwork(
+  id: string,
+  updates: Partial<Network>
+): void {
+  const networks = getCustomNetworks();
+  const index = networks.findIndex((n) => n.id === id);
+
+  if (index === -1) {
+    throw new Error(`Network with ID ${id} not found`);
+  }
+
+  networks[index] = { ...networks[index], ...updates };
+  saveCustomNetworks(networks);
+}
+
+/**
+ * Get a single custom network by ID
+ */
+export function getCustomNetworkById(id: string): Network | undefined {
+  const networks = getCustomNetworks();
+  return networks.find((n) => n.id === id);
+}
+
+/**
+ * Clear all custom networks (for testing)
+ */
+export function clearCustomNetworks(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(STORAGE_KEYS.CUSTOM_NETWORKS);
 }
