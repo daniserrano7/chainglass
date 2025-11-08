@@ -1,13 +1,15 @@
-import { reactRouter } from "@react-router/dev/vite";
-import { defineConfig } from "vite";
-import path from "node:path";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
-  plugins: [reactRouter()],
+  plugins: [react()],
   resolve: {
     alias: {
-      "~": path.resolve(__dirname, "./app"),
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
-});
+  css: {
+    postcss: './postcss.config.js',
+  },
+})
