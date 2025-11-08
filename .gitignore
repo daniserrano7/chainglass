@@ -6,19 +6,47 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.log.*
 
+# dependencies
 node_modules
+
+# production
+/build
+/.react-router
 dist
 dist-ssr
+
+# misc
+.DS_Store
 *.local
 
-# Editor directories and files
-.vscode/*
+# environment variables
+.env
+.env.local
+.env.production.local
+.env.development.local
+
+# IDE
+.vscode
 !.vscode/extensions.json
 .idea
-.DS_Store
+*.swp
+*.swo
+*.sw?
+*~
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+
+# OS
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Cache
+.cache
+.parcel-cache
+.turbo
