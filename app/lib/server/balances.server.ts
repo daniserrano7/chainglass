@@ -13,7 +13,7 @@ import {
   fetchTokenBalances,
 } from "../services/rpc";
 import { getTokenPrices, calculateUsdValue } from "./prices.server";
-import type { NetworkBalance, Balance } from "../types/portfolio";
+import type { NetworkBalance, Balance } from "../types/balance";
 
 // Cache TTLs
 const NON_ZERO_BALANCE_TTL = 10 * 60 * 1000; // 10 minutes
@@ -80,28 +80,47 @@ async function scanNetwork(
 
   try {
     // Fetch native balance
-    const nativeBalance = await fetchNativeBalance(address, networkId);
+    const nativeBalance = await fetchNativeBalance(network, address);
 
     // Fetch token balances
     const tokens = getTokensForNetwork(networkId);
     const tokenBalances = await fetchTokenBalances(
-      address,
-      networkId,
-      tokens.map((t) => t.contractAddress)
+      network,
+      tokens,
+      address
     );
 
     // Combine all balances
     const allBalances: Balance[] = [];
-    if (nativeBalance) {
-      allBalances.push(nativeBalance);
+
+    // Add native balance
+    if (nativeBalance && BigInt(nativeBalance.amount) > 0n) {
+      allBalances.push({
+        symbol: network.nativeToken.symbol,
+        amount: nativeBalance.amount.toString(),
+        formattedAmount: nativeBalance.formatted,
+        decimals: network.nativeToken.decimals,
+        isNative: true,
+      });
     }
-    allBalances.push(...tokenBalances);
+
+    // Add token balances
+    for (const tb of tokenBalances) {
+      allBalances.push({
+        symbol: tb.token.symbol,
+        amount: tb.amount.toString(),
+        formattedAmount: tb.formatted,
+        decimals: tb.token.decimals,
+        isNative: false,
+        contractAddress: tb.token.address,
+      });
+    }
 
     // Get prices for all tokens
     const priceRequests = allBalances.map((b) => ({
       coingeckoId: b.isNative
         ? network.nativeToken.coingeckoId
-        : tokens.find((t) => t.contractAddress === b.contractAddress)
+        : tokens.find((t) => t.address === b.contractAddress)
             ?.coingeckoId || "",
       symbol: b.symbol,
     }));
@@ -115,7 +134,7 @@ async function scanNetwork(
     for (const balance of allBalances) {
       const coingeckoId = balance.isNative
         ? network.nativeToken.coingeckoId
-        : tokens.find((t) => t.contractAddress === balance.contractAddress)
+        : tokens.find((t) => t.address === balance.contractAddress)
             ?.coingeckoId || "";
 
       const price = priceResult.prices.get(coingeckoId);

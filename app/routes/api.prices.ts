@@ -3,7 +3,8 @@
  * GET /api/prices?tokens=ethereum,matic-network,binancecoin
  */
 
-import { json, type LoaderFunctionArgs } from "react-router";
+
+import type { LoaderFunctionArgs } from "react-router";
 import { getTokenPrices, getPriceCacheStats } from "../lib/server/prices.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -12,7 +13,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const includeStats = url.searchParams.get("includeStats") === "true";
 
   if (!tokensParam) {
-    return json(
+    return Response.json(
       { error: "Missing 'tokens' query parameter" },
       { status: 400 }
     );
@@ -47,10 +48,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
       response.cacheStats = getPriceCacheStats();
     }
 
-    return json(response);
+    return Response.json(response);
   } catch (error) {
     console.error("Error in /api/prices:", error);
-    return json(
+    return Response.json(
       {
         error: error instanceof Error ? error.message : "Unknown error",
       },
