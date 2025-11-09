@@ -5,6 +5,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 export default function Root() {
   return (
@@ -16,7 +17,9 @@ export default function Root() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
         <ScrollRestoration />
         <Scripts />
       </body>

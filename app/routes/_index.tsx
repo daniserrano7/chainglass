@@ -7,6 +7,8 @@ import { PortfolioSummary } from "~/components/PortfolioSummary";
 import { ScanProgress } from "~/components/ScanProgress";
 import { NetworkManager } from "~/components/NetworkManager";
 import { TokenManager } from "~/components/TokenManager";
+import { ErrorDisplay } from "~/components/ErrorDisplay";
+import { ErrorBoundary } from "~/components/ErrorBoundary";
 import {
   getWatchedAddresses,
   addWatchedAddress,
@@ -231,45 +233,77 @@ export default function Index() {
   return (
     <div className="dashboard">
       {/* Portfolio Summary */}
-      <PortfolioSummary summary={summary} />
+      <ErrorBoundary
+        fallback={
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+            <p className="text-red-300">Failed to load portfolio summary</p>
+          </div>
+        }
+      >
+        <PortfolioSummary summary={summary} />
+      </ErrorBoundary>
 
       {/* Add Address Form */}
-      <AddAddressForm onAddAddress={handleAddAddress} isLoading={isLoading} />
+      <ErrorBoundary
+        fallback={
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+            <p className="text-red-300">Failed to load add address form</p>
+          </div>
+        }
+      >
+        <AddAddressForm onAddAddress={handleAddAddress} isLoading={isLoading} />
+      </ErrorBoundary>
 
       {/* Network Manager */}
-      <NetworkManager
-        onNetworkAdded={(network) => {
-          console.log("Network added:", network);
-          // Rescan all addresses to fetch balances for the new network
-          const addresses = getWatchedAddresses();
-          addresses.forEach((addr) => {
-            scanAddress(addr, false);
-          });
-        }}
-      />
+      <ErrorBoundary
+        fallback={
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+            <p className="text-red-300">Failed to load network manager</p>
+          </div>
+        }
+      >
+        <NetworkManager
+          onNetworkAdded={(network) => {
+            console.log("Network added:", network);
+            // Rescan all addresses to fetch balances for the new network
+            const addresses = getWatchedAddresses();
+            addresses.forEach((addr) => {
+              scanAddress(addr, false);
+            });
+          }}
+        />
+      </ErrorBoundary>
 
       {/* Token Manager */}
-      <TokenManager
-        onTokenAdded={(token) => {
-          console.log("Token added:", token);
-          // Rescan all addresses to fetch balances for the new token
-          const addresses = getWatchedAddresses();
-          addresses.forEach((addr) => {
-            scanAddress(addr, false);
-          });
-        }}
-      />
+      <ErrorBoundary
+        fallback={
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+            <p className="text-red-300">Failed to load token manager</p>
+          </div>
+        }
+      >
+        <TokenManager
+          onTokenAdded={(token) => {
+            console.log("Token added:", token);
+            // Rescan all addresses to fetch balances for the new token
+            const addresses = getWatchedAddresses();
+            addresses.forEach((addr) => {
+              scanAddress(addr, false);
+            });
+          }}
+        />
+      </ErrorBoundary>
 
       {/* Error Message */}
-      {error && (
-        <div className="error-banner">
-          <span className="error-icon">⚠️</span>
-          {error}
-          <button className="error-close" onClick={() => setError(null)}>
-            ×
-          </button>
-        </div>
-      )}
+      <ErrorDisplay
+        error={error}
+        onDismiss={() => setError(null)}
+        onRetry={() => {
+          setError(null);
+          loadAndScanAddresses();
+        }}
+        className="mb-6"
+      />
 
       {/* Scan Progress */}
       {scanState && <ScanProgress networks={scanState.networks} />}
@@ -285,24 +319,32 @@ export default function Index() {
         <>
           {/* Tracked Addresses */}
           {portfolios.length > 0 ? (
-            <div className="addresses-section">
-              <h2>
-                Tracked Addresses ({portfolios.length})
-              </h2>
-              <div className="addresses-list">
-                {portfolios.map((portfolio) => (
-                  <AddressCard
-                    key={portfolio.addressId}
-                    portfolio={portfolio}
-                    onRescan={handleRescan}
-                    onRemove={handleRemove}
-                    isScanning={
-                      scanState?.addressId === portfolio.addressId || isLoading
-                    }
-                  />
-                ))}
+            <ErrorBoundary
+              fallback={
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mt-6">
+                  <p className="text-red-300">
+                    Failed to display address cards. Try refreshing the page.
+                  </p>
+                </div>
+              }
+            >
+              <div className="addresses-section">
+                <h2>Tracked Addresses ({portfolios.length})</h2>
+                <div className="addresses-list">
+                  {portfolios.map((portfolio) => (
+                    <AddressCard
+                      key={portfolio.addressId}
+                      portfolio={portfolio}
+                      onRescan={handleRescan}
+                      onRemove={handleRemove}
+                      isScanning={
+                        scanState?.addressId === portfolio.addressId || isLoading
+                      }
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            </ErrorBoundary>
           ) : (
             <div className="empty-state">
               <div className="empty-icon">📊</div>
@@ -331,43 +373,6 @@ export default function Index() {
           max-width: 1200px;
           margin: 0 auto;
           padding: 32px 16px;
-        }
-
-        .error-banner {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 16px 20px;
-          background-color: #fef2f2;
-          border: 1px solid #fecaca;
-          border-radius: 8px;
-          color: #dc2626;
-          margin-bottom: 24px;
-        }
-
-        .error-icon {
-          font-size: 20px;
-        }
-
-        .error-close {
-          margin-left: auto;
-          background: none;
-          border: none;
-          color: #dc2626;
-          font-size: 24px;
-          cursor: pointer;
-          padding: 0;
-          width: 24px;
-          height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 4px;
-          transition: background-color 0.2s;
-        }
-
-        .error-close:hover {
-          background-color: rgba(220, 38, 38, 0.1);
         }
 
         .addresses-section {
