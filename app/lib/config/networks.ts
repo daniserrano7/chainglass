@@ -1,4 +1,5 @@
 import type { Network } from "../types";
+import { getCustomNetworks } from "../services/storage";
 
 /**
  * EVM Network configurations
@@ -82,24 +83,69 @@ export const EVM_NETWORKS: Record<string, Network> = {
 };
 
 /**
- * Get all enabled EVM networks
+ * Get all networks (default + custom)
+ */
+export function getAllNetworks(): Network[] {
+  const customNetworks = getCustomNetworks();
+  const defaultNetworks = Object.values(EVM_NETWORKS);
+
+  // Merge default and custom networks, avoiding duplicates by ID
+  const networksMap = new Map<string, Network>();
+
+  // Add default networks first
+  defaultNetworks.forEach((network) => {
+    networksMap.set(network.id, network);
+  });
+
+  // Add custom networks (will override defaults with same ID)
+  customNetworks.forEach((network) => {
+    networksMap.set(network.id, network);
+  });
+
+  return Array.from(networksMap.values());
+}
+
+/**
+ * Get all enabled EVM networks (includes custom networks)
  */
 export function getEnabledNetworks(): Network[] {
-  return Object.values(EVM_NETWORKS);
+  return getAllNetworks();
 }
 
 /**
- * Get network by ID
+ * Get network by ID (checks both default and custom networks)
  */
 export function getNetworkById(networkId: string): Network | undefined {
-  return EVM_NETWORKS[networkId];
+  const defaultNetwork = EVM_NETWORKS[networkId];
+  if (defaultNetwork) return defaultNetwork;
+
+  const customNetworks = getCustomNetworks();
+  return customNetworks.find((n) => n.id === networkId);
 }
 
 /**
- * Get network by chain ID
+ * Get network by chain ID (checks both default and custom networks)
  */
 export function getNetworkByChainId(chainId: number): Network | undefined {
-  return Object.values(EVM_NETWORKS).find((n) => n.chainId === chainId);
+  const allNetworks = getAllNetworks();
+  return allNetworks.find((n) => n.chainId === chainId);
+}
+
+/**
+ * Get networks grouped by chain family
+ */
+export function getNetworksByFamily(): Record<string, Network[]> {
+  const allNetworks = getAllNetworks();
+  const grouped: Record<string, Network[]> = {};
+
+  allNetworks.forEach((network) => {
+    if (!grouped[network.chainFamily]) {
+      grouped[network.chainFamily] = [];
+    }
+    grouped[network.chainFamily].push(network);
+  });
+
+  return grouped;
 }
 
 /**
