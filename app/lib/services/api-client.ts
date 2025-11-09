@@ -4,6 +4,62 @@
 
 import type { NetworkBalance } from "../types/balance";
 
+/**
+ * Retry a fetch request with exponential backoff
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit = {},
+  maxRetries = 3
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Don't retry on abort errors from user cancellation
+      if (lastError.name === "AbortError" && attempt === 0) {
+        throw new Error("Request timed out after 30 seconds");
+      }
+
+      // Only retry on network errors, not on HTTP errors
+      if (attempt < maxRetries - 1) {
+        // Exponential backoff: 1s, 2s, 4s
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw new Error(
+    `Request failed after ${maxRetries} attempts: ${lastError?.message || "Unknown error"}`
+  );
+}
+
+/**
+ * Parse error response body
+ */
+async function getErrorMessage(response: Response): Promise<string> {
+  try {
+    const data = await response.json();
+    return data.error || response.statusText;
+  } catch {
+    return response.statusText;
+  }
+}
+
 export interface PriceApiResponse {
   prices: Record<string, number>;
   cached: string[];
@@ -48,10 +104,11 @@ export async function fetchPricesFromServer(
     includeStats ? "&includeStats=true" : ""
   }`;
 
-  const response = await fetch(url);
+  const response = await fetchWithRetry(url);
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch prices: ${response.statusText}`);
+    const errorMessage = await getErrorMessage(response);
+    throw new Error(`Failed to fetch prices: ${errorMessage}`);
   }
 
   return response.json();
@@ -86,10 +143,11 @@ export async function fetchBalancesFromServer(
     params.toString() ? `?${params.toString()}` : ""
   }`;
 
-  const response = await fetch(url);
+  const response = await fetchWithRetry(url);
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch balances: ${response.statusText}`);
+    const errorMessage = await getErrorMessage(response);
+    throw new Error(`Failed to fetch balances: ${errorMessage}`);
   }
 
   return response.json();
@@ -99,10 +157,11 @@ export async function fetchBalancesFromServer(
  * Fetch cache statistics from server
  */
 export async function fetchCacheStats(): Promise<CacheStatsResponse> {
-  const response = await fetch("/api/cache-stats");
+  const response = await fetchWithRetry("/api/cache-stats");
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch cache stats: ${response.statusText}`);
+    const errorMessage = await getErrorMessage(response);
+    throw new Error(`Failed to fetch cache stats: ${errorMessage}`);
   }
 
   return response.json();
@@ -112,12 +171,13 @@ export async function fetchCacheStats(): Promise<CacheStatsResponse> {
  * Clear price cache on server
  */
 export async function clearPriceCache(): Promise<void> {
-  const response = await fetch("/api/cache-stats?action=clear&type=prices", {
+  const response = await fetchWithRetry("/api/cache-stats?action=clear&type=prices", {
     method: "POST",
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to clear price cache: ${response.statusText}`);
+    const errorMessage = await getErrorMessage(response);
+    throw new Error(`Failed to clear price cache: ${errorMessage}`);
   }
 }
 
@@ -129,11 +189,12 @@ export async function clearBalanceCache(address?: string): Promise<void> {
     ? `/api/cache-stats?action=clear&type=balances&address=${address}`
     : "/api/cache-stats?action=clear&type=balances";
 
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url, {
     method: "POST",
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to clear balance cache: ${response.statusText}`);
+    const errorMessage = await getErrorMessage(response);
+    throw new Error(`Failed to clear balance cache: ${errorMessage}`);
   }
 }

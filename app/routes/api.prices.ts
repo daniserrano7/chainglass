@@ -3,29 +3,37 @@
  * GET /api/prices?tokens=ethereum,matic-network,binancecoin
  */
 
-
 import type { LoaderFunctionArgs } from "react-router";
 import { getTokenPrices, getPriceCacheStats } from "../lib/server/prices.server";
+import {
+  handleApiError,
+  createValidationError,
+} from "../lib/utils/api-error";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const url = new URL(request.url);
-  const tokensParam = url.searchParams.get("tokens");
-  const includeStats = url.searchParams.get("includeStats") === "true";
-
-  if (!tokensParam) {
-    return Response.json(
-      { error: "Missing 'tokens' query parameter" },
-      { status: 400 }
-    );
-  }
-
   try {
+    const url = new URL(request.url);
+    const tokensParam = url.searchParams.get("tokens");
+    const includeStats = url.searchParams.get("includeStats") === "true";
+
+    // Validate required parameter
+    if (!tokensParam) {
+      throw createValidationError(
+        "Missing 'tokens' query parameter. Expected format: 'symbol1:coingeckoId1,symbol2:coingeckoId2'"
+      );
+    }
+
     // Parse tokens parameter
     // Expected format: "symbol1:coingeckoId1,symbol2:coingeckoId2"
     // Example: "ETH:ethereum,MATIC:matic-network"
     const tokenPairs = tokensParam.split(",").map((pair) => {
       const [symbol, coingeckoId] = pair.split(":");
-      return { symbol: symbol || "", coingeckoId: coingeckoId || "" };
+      if (!symbol || !coingeckoId) {
+        throw createValidationError(
+          `Invalid token format in '${pair}'. Expected format: 'symbol:coingeckoId'`
+        );
+      }
+      return { symbol, coingeckoId };
     });
 
     // Fetch prices
@@ -50,12 +58,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     return Response.json(response);
   } catch (error) {
-    console.error("Error in /api/prices:", error);
-    return Response.json(
-      {
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

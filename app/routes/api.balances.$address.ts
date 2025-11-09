@@ -3,32 +3,38 @@
  * GET /api/balances/:address?networks=ethereum,polygon&forceRefresh=false&includeStats=false
  */
 
-
 import type { LoaderFunctionArgs } from "react-router";
 import {
   scanAddress,
   getBalanceCacheStats,
 } from "../lib/server/balances.server";
 import { registerActiveAddress } from "../lib/server/background-refresh.server";
+import {
+  handleApiError,
+  createValidationError,
+} from "../lib/utils/api-error";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-  const { address } = params;
-
-  if (!address) {
-    return Response.json({ error: "Missing address parameter" }, { status: 400 });
-  }
-
-  // Validate address format (basic check)
-  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    return Response.json({ error: "Invalid Ethereum address format" }, { status: 400 });
-  }
-
-  const url = new URL(request.url);
-  const networksParam = url.searchParams.get("networks");
-  const forceRefresh = url.searchParams.get("forceRefresh") === "true";
-  const includeStats = url.searchParams.get("includeStats") === "true";
-
   try {
+    const { address } = params;
+
+    // Validate address parameter
+    if (!address) {
+      throw createValidationError("Missing address parameter");
+    }
+
+    // Validate address format (basic check)
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      throw createValidationError(
+        "Invalid Ethereum address format. Expected format: 0x followed by 40 hexadecimal characters"
+      );
+    }
+
+    const url = new URL(request.url);
+    const networksParam = url.searchParams.get("networks");
+    const forceRefresh = url.searchParams.get("forceRefresh") === "true";
+    const includeStats = url.searchParams.get("includeStats") === "true";
+
     // Register address as active for background refresh
     registerActiveAddress(address);
 
@@ -59,12 +65,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
     return Response.json(response);
   } catch (error) {
-    console.error(`Error in /api/balances/${address}:`, error);
-    return Response.json(
-      {
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
