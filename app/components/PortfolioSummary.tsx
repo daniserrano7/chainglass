@@ -211,64 +211,66 @@ export function PortfolioSummary({ summary }: PortfolioSummaryProps) {
       )}
 
       <style>{`
+        /* Mobile-first base styles */
         .portfolio-summary {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 12px;
-          padding: 32px;
-          margin-bottom: 32px;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 16px;
           color: white;
         }
 
         .summary-header {
           text-align: center;
-          margin-bottom: 32px;
+          margin-bottom: 24px;
         }
 
         .summary-header h1 {
           margin: 0 0 8px 0;
-          font-size: 36px;
+          font-size: clamp(24px, 6vw, 36px);
           font-weight: 700;
         }
 
         .tagline {
           margin: 0;
-          font-size: 16px;
+          font-size: clamp(14px, 3.5vw, 16px);
           opacity: 0.9;
         }
 
         .total-portfolio {
           text-align: center;
-          padding: 32px;
+          padding: 20px 16px;
           background: rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
+          border-radius: 8px;
           backdrop-filter: blur(10px);
-          margin-bottom: 32px;
+          margin-bottom: 20px;
         }
 
         .total-label {
-          font-size: 14px;
+          font-size: 12px;
           text-transform: uppercase;
-          letter-spacing: 1px;
+          letter-spacing: 0.5px;
           opacity: 0.9;
-          margin-bottom: 12px;
-        }
-
-        .total-value {
-          font-size: 48px;
-          font-weight: 700;
           margin-bottom: 8px;
         }
 
+        .total-value {
+          font-size: clamp(32px, 8vw, 48px);
+          font-weight: 700;
+          margin-bottom: 8px;
+          word-break: break-word;
+        }
+
         .total-addresses {
-          font-size: 14px;
+          font-size: 13px;
           opacity: 0.8;
         }
 
         .breakdown-section {
           background: rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          padding: 24px;
-          margin-bottom: 24px;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 16px;
           backdrop-filter: blur(10px);
         }
 
@@ -277,28 +279,29 @@ export function PortfolioSummary({ summary }: PortfolioSummaryProps) {
         }
 
         .breakdown-section h3 {
-          margin: 0 0 20px 0;
-          font-size: 18px;
+          margin: 0 0 16px 0;
+          font-size: 16px;
           font-weight: 600;
         }
 
         .chart-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
+          grid-template-columns: 1fr;
+          gap: 16px;
           align-items: start;
         }
 
         .chart-container {
           background: rgba(255, 255, 255, 0.05);
           border-radius: 8px;
-          padding: 20px;
+          padding: 12px;
+          min-height: 250px;
         }
 
         .breakdown-list {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
         }
 
         .legend-dot {
@@ -311,22 +314,25 @@ export function PortfolioSummary({ summary }: PortfolioSummaryProps) {
         .breakdown-item {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 6px;
         }
 
         .breakdown-info {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 8px;
         }
 
         .breakdown-name {
           font-weight: 500;
+          font-size: 14px;
         }
 
         .breakdown-percentage {
-          font-size: 14px;
+          font-size: 13px;
           opacity: 0.9;
+          white-space: nowrap;
         }
 
         .breakdown-bar-container {
@@ -344,40 +350,46 @@ export function PortfolioSummary({ summary }: PortfolioSummaryProps) {
         }
 
         .breakdown-value {
-          font-size: 20px;
+          font-size: 18px;
           font-weight: 600;
         }
 
         .assets-list {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 10px;
         }
 
         .asset-item {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 12px;
+          padding: 10px;
           background: rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
+          border-radius: 6px;
+          gap: 8px;
         }
 
         .asset-info {
           display: flex;
           flex-direction: column;
           gap: 4px;
+          min-width: 0;
+          flex: 1;
         }
 
         .asset-symbol {
           font-weight: 600;
-          font-size: 16px;
+          font-size: 15px;
         }
 
         .asset-amount {
-          font-size: 12px;
+          font-size: 11px;
           opacity: 0.8;
           font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .asset-value-info {
@@ -385,38 +397,152 @@ export function PortfolioSummary({ summary }: PortfolioSummaryProps) {
           flex-direction: column;
           align-items: flex-end;
           gap: 4px;
+          white-space: nowrap;
         }
 
         .asset-value {
           font-weight: 600;
-          font-size: 16px;
+          font-size: 15px;
         }
 
         .asset-percentage {
-          font-size: 12px;
+          font-size: 11px;
           opacity: 0.8;
         }
 
-        @media (max-width: 768px) {
+        /* Tablet styles (640px+) */
+        @media (min-width: 640px) {
           .portfolio-summary {
             padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
           }
 
-          .summary-header h1 {
-            font-size: 28px;
+          .summary-header {
+            margin-bottom: 28px;
           }
 
-          .total-value {
-            font-size: 36px;
+          .total-portfolio {
+            padding: 28px 24px;
+            border-radius: 12px;
+            margin-bottom: 28px;
+          }
+
+          .total-label {
+            font-size: 13px;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+          }
+
+          .breakdown-section {
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+          }
+
+          .breakdown-section h3 {
+            margin-bottom: 18px;
+            font-size: 17px;
           }
 
           .chart-grid {
-            grid-template-columns: 1fr;
             gap: 20px;
           }
 
           .chart-container {
             padding: 16px;
+            min-height: 280px;
+          }
+
+          .breakdown-name {
+            font-size: 15px;
+          }
+
+          .breakdown-percentage {
+            font-size: 14px;
+          }
+
+          .breakdown-value {
+            font-size: 19px;
+          }
+
+          .asset-item {
+            padding: 12px;
+            border-radius: 8px;
+          }
+
+          .asset-symbol {
+            font-size: 16px;
+          }
+
+          .asset-amount {
+            font-size: 12px;
+          }
+
+          .asset-value {
+            font-size: 16px;
+          }
+
+          .asset-percentage {
+            font-size: 12px;
+          }
+
+          .breakdown-list {
+            gap: 14px;
+          }
+
+          .assets-list {
+            gap: 12px;
+          }
+        }
+
+        /* Desktop styles (1024px+) */
+        @media (min-width: 1024px) {
+          .portfolio-summary {
+            padding: 32px;
+            margin-bottom: 32px;
+          }
+
+          .summary-header {
+            margin-bottom: 32px;
+          }
+
+          .total-portfolio {
+            padding: 32px;
+            margin-bottom: 32px;
+          }
+
+          .total-label {
+            font-size: 14px;
+            margin-bottom: 12px;
+          }
+
+          .breakdown-section {
+            padding: 24px;
+            margin-bottom: 24px;
+          }
+
+          .breakdown-section h3 {
+            margin-bottom: 20px;
+            font-size: 18px;
+          }
+
+          .chart-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+          }
+
+          .chart-container {
+            padding: 20px;
+            min-height: 300px;
+          }
+
+          .breakdown-list {
+            gap: 16px;
+          }
+
+          .breakdown-value {
+            font-size: 20px;
           }
         }
       `}</style>

@@ -157,20 +157,21 @@ export function AddressCard({
       </div>
 
       <style>{`
+        /* Mobile-first base styles */
         .address-card {
           background: white;
           border: 1px solid #e5e7eb;
           border-radius: 8px;
-          padding: 20px;
-          margin-bottom: 16px;
+          padding: 16px;
+          margin-bottom: 12px;
         }
 
         .card-header {
           display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 20px;
-          padding-bottom: 16px;
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: 16px;
+          padding-bottom: 12px;
           border-bottom: 2px solid #f3f4f6;
         }
 
@@ -179,7 +180,7 @@ export function AddressCard({
         }
 
         .address-label {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 600;
           color: #111827;
           margin-bottom: 4px;
@@ -187,9 +188,10 @@ export function AddressCard({
 
         .address-value {
           font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-          font-size: 14px;
+          font-size: 13px;
           color: #6b7280;
           margin-bottom: 4px;
+          word-break: break-all;
         }
 
         .chain-badge {
@@ -198,106 +200,121 @@ export function AddressCard({
           background-color: #dbeafe;
           color: #1e40af;
           border-radius: 4px;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 500;
-          margin-left: 8px;
+          margin-left: 4px;
         }
 
         .last-scanned {
-          font-size: 12px;
+          font-size: 11px;
           color: #9ca3af;
         }
 
         .address-total {
-          text-align: right;
+          text-align: left;
+          padding: 12px;
+          background-color: #f9fafb;
+          border-radius: 6px;
         }
 
         .total-label {
-          font-size: 12px;
+          font-size: 11px;
           color: #6b7280;
           margin-bottom: 4px;
         }
 
         .total-value {
-          font-size: 24px;
+          font-size: 20px;
           font-weight: 700;
           color: #111827;
         }
 
         .networks-section {
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
 
         .network-group {
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
 
         .network-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 8px 12px;
+          padding: 8px 10px;
           background-color: #f9fafb;
           border-radius: 6px;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
+          gap: 8px;
         }
 
         .network-name {
           font-weight: 600;
           color: #374151;
+          font-size: 13px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .network-total {
           font-weight: 600;
           color: #111827;
+          font-size: 13px;
+          white-space: nowrap;
         }
 
         .balance-row {
-          display: flex;
-          justify-content: space-between;
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          gap: 8px;
           align-items: center;
-          padding: 8px 16px;
+          padding: 6px 8px;
           border-left: 3px solid #e5e7eb;
-          margin-left: 8px;
+          margin-left: 4px;
+          font-size: 13px;
         }
 
         .balance-symbol {
-          flex: 0 0 80px;
           font-weight: 600;
           color: #374151;
+          white-space: nowrap;
         }
 
         .balance-amount {
-          flex: 1;
           text-align: right;
           font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-          font-size: 14px;
+          font-size: 12px;
           color: #6b7280;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .balance-usd {
-          flex: 0 0 120px;
           text-align: right;
           font-weight: 500;
           color: #111827;
+          white-space: nowrap;
+          font-size: 13px;
         }
 
         .errors-section {
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
 
         .error-item {
-          padding: 12px;
+          padding: 10px;
           background-color: #fef2f2;
           border: 1px solid #fecaca;
           border-radius: 6px;
           color: #dc2626;
-          font-size: 14px;
-          margin-bottom: 8px;
+          font-size: 12px;
+          margin-bottom: 6px;
+          word-break: break-word;
         }
 
         .no-balance-section {
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
 
         .toggle-no-balance {
@@ -306,13 +323,14 @@ export function AddressCard({
           background-color: #f9fafb;
           border: 1px solid #e5e7eb;
           border-radius: 6px;
-          font-size: 14px;
+          font-size: 13px;
           color: #6b7280;
           cursor: pointer;
           display: flex;
           justify-content: space-between;
           align-items: center;
           transition: background-color 0.2s;
+          min-height: 44px;
         }
 
         .toggle-no-balance:hover {
@@ -321,41 +339,42 @@ export function AddressCard({
 
         .toggle-icon {
           font-size: 12px;
+          margin-left: 8px;
         }
 
         .no-balance-list {
-          margin-top: 8px;
-          padding: 12px;
+          margin-top: 6px;
+          padding: 10px;
           background-color: #f9fafb;
           border-radius: 6px;
         }
 
         .no-balance-item {
-          padding: 4px 8px;
-          font-size: 14px;
+          padding: 4px 6px;
+          font-size: 13px;
           color: #6b7280;
         }
 
         .zero-balance-state {
-          padding: 20px;
+          padding: 16px;
           text-align: center;
           color: #9ca3af;
-          font-size: 14px;
+          font-size: 13px;
           background-color: #f9fafb;
           border-radius: 6px;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
         }
 
         .card-actions {
           display: flex;
-          gap: 12px;
-          padding-top: 16px;
+          gap: 8px;
+          padding-top: 12px;
           border-top: 1px solid #f3f4f6;
         }
 
         .btn-secondary {
           flex: 1;
-          padding: 10px 20px;
+          padding: 12px 16px;
           background-color: white;
           color: #3b82f6;
           border: 1px solid #3b82f6;
@@ -364,6 +383,7 @@ export function AddressCard({
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
+          min-height: 44px;
         }
 
         .btn-secondary:hover:not(:disabled) {
@@ -376,9 +396,13 @@ export function AddressCard({
           cursor: not-allowed;
         }
 
+        .btn-secondary:active:not(:disabled) {
+          transform: scale(0.98);
+        }
+
         .btn-danger {
           flex: 1;
-          padding: 10px 20px;
+          padding: 12px 16px;
           background-color: white;
           color: #dc2626;
           border: 1px solid #dc2626;
@@ -387,6 +411,7 @@ export function AddressCard({
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
+          min-height: 44px;
         }
 
         .btn-danger:hover:not(:disabled) {
@@ -397,6 +422,127 @@ export function AddressCard({
         .btn-danger:disabled {
           opacity: 0.5;
           cursor: not-allowed;
+        }
+
+        .btn-danger:active:not(:disabled) {
+          transform: scale(0.98);
+        }
+
+        /* Tablet styles (640px+) */
+        @media (min-width: 640px) {
+          .address-card {
+            padding: 20px;
+            margin-bottom: 16px;
+          }
+
+          .card-header {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+          }
+
+          .address-label {
+            font-size: 18px;
+          }
+
+          .address-value {
+            font-size: 14px;
+            word-break: normal;
+          }
+
+          .chain-badge {
+            font-size: 12px;
+            margin-left: 8px;
+          }
+
+          .last-scanned {
+            font-size: 12px;
+          }
+
+          .address-total {
+            text-align: right;
+            padding: 0;
+            background-color: transparent;
+          }
+
+          .total-label {
+            font-size: 12px;
+          }
+
+          .total-value {
+            font-size: 24px;
+          }
+
+          .network-header {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+          }
+
+          .network-name {
+            font-size: 14px;
+          }
+
+          .network-total {
+            font-size: 14px;
+          }
+
+          .balance-row {
+            grid-template-columns: 80px 1fr 120px;
+            padding: 8px 16px;
+            margin-left: 8px;
+            font-size: 14px;
+          }
+
+          .balance-symbol {
+            font-size: 14px;
+          }
+
+          .balance-amount {
+            font-size: 14px;
+          }
+
+          .balance-usd {
+            font-size: 14px;
+          }
+
+          .error-item {
+            padding: 12px;
+            font-size: 14px;
+            margin-bottom: 8px;
+          }
+
+          .toggle-no-balance {
+            font-size: 14px;
+          }
+
+          .no-balance-item {
+            font-size: 14px;
+          }
+
+          .zero-balance-state {
+            padding: 20px;
+            font-size: 14px;
+          }
+
+          .card-actions {
+            gap: 12px;
+            padding-top: 16px;
+          }
+
+          .btn-secondary,
+          .btn-danger {
+            padding: 10px 20px;
+          }
+
+          .networks-section {
+            margin-bottom: 16px;
+          }
+
+          .network-group {
+            margin-bottom: 16px;
+          }
         }
       `}</style>
     </div>

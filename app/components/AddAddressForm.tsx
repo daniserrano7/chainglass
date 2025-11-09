@@ -96,29 +96,30 @@ export function AddAddressForm({ onAddAddress, isLoading = false }: AddAddressFo
       </form>
 
       <style>{`
+        /* Mobile-first base styles */
         .add-address-form {
           background: white;
           border: 1px solid #e5e7eb;
           border-radius: 8px;
-          padding: 24px;
-          margin-bottom: 24px;
+          padding: 16px;
+          margin-bottom: 16px;
         }
 
         .add-address-form h2 {
-          margin: 0 0 20px 0;
-          font-size: 20px;
+          margin: 0 0 16px 0;
+          font-size: 18px;
           font-weight: 600;
           color: #111827;
         }
 
         .form-group {
-          margin-bottom: 16px;
+          margin-bottom: 14px;
         }
 
         .form-group label {
           display: block;
           margin-bottom: 6px;
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 500;
           color: #374151;
         }
@@ -130,12 +131,22 @@ export function AddAddressForm({ onAddAddress, isLoading = false }: AddAddressFo
         .form-group input,
         .form-group select {
           width: 100%;
-          padding: 10px 12px;
+          padding: 12px;
           border: 1px solid #d1d5db;
           border-radius: 6px;
-          font-size: 14px;
+          font-size: 16px;
           font-family: inherit;
           transition: border-color 0.2s;
+          min-height: 44px;
+          -webkit-appearance: none;
+          appearance: none;
+        }
+
+        .form-group select {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23374151' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          padding-right: 36px;
         }
 
         .form-group input:focus,
@@ -149,10 +160,12 @@ export function AddAddressForm({ onAddAddress, isLoading = false }: AddAddressFo
         .form-group select:disabled {
           background-color: #f3f4f6;
           cursor: not-allowed;
+          opacity: 0.6;
         }
 
         .address-input {
           font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          font-size: 14px;
         }
 
         .error-message {
@@ -162,12 +175,13 @@ export function AddAddressForm({ onAddAddress, isLoading = false }: AddAddressFo
           border: 1px solid #fecaca;
           border-radius: 6px;
           color: #dc2626;
-          font-size: 14px;
+          font-size: 13px;
+          word-break: break-word;
         }
 
         .btn-primary {
           width: 100%;
-          padding: 12px 24px;
+          padding: 14px 24px;
           background-color: #3b82f6;
           color: white;
           border: none;
@@ -175,16 +189,90 @@ export function AddAddressForm({ onAddAddress, isLoading = false }: AddAddressFo
           font-size: 16px;
           font-weight: 500;
           cursor: pointer;
-          transition: background-color 0.2s;
+          transition: all 0.2s;
+          min-height: 48px;
+          touch-action: manipulation;
         }
 
         .btn-primary:hover:not(:disabled) {
           background-color: #2563eb;
         }
 
+        .btn-primary:active:not(:disabled) {
+          transform: scale(0.98);
+        }
+
         .btn-primary:disabled {
           background-color: #9ca3af;
           cursor: not-allowed;
+        }
+
+        /* Tablet styles (640px+) */
+        @media (min-width: 640px) {
+          .add-address-form {
+            padding: 20px;
+            margin-bottom: 20px;
+          }
+
+          .add-address-form h2 {
+            margin-bottom: 18px;
+            font-size: 19px;
+          }
+
+          .form-group {
+            margin-bottom: 15px;
+          }
+
+          .form-group label {
+            font-size: 14px;
+          }
+
+          .form-group input,
+          .form-group select {
+            padding: 11px 12px;
+            font-size: 15px;
+          }
+
+          .address-input {
+            font-size: 14px;
+          }
+
+          .error-message {
+            font-size: 14px;
+          }
+
+          .btn-primary {
+            padding: 13px 24px;
+            min-height: 46px;
+          }
+        }
+
+        /* Desktop styles (1024px+) */
+        @media (min-width: 1024px) {
+          .add-address-form {
+            padding: 24px;
+            margin-bottom: 24px;
+          }
+
+          .add-address-form h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+          }
+
+          .form-group {
+            margin-bottom: 16px;
+          }
+
+          .form-group input,
+          .form-group select {
+            padding: 10px 12px;
+            font-size: 14px;
+          }
+
+          .btn-primary {
+            padding: 12px 24px;
+            min-height: 44px;
+          }
         }
       `}</style>
     </div>
