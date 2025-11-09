@@ -10,6 +10,7 @@ import { NetworkManager } from "~/components/NetworkManager";
 import { TokenManager } from "~/components/TokenManager";
 import { ErrorDisplay } from "~/components/ErrorDisplay";
 import { ErrorBoundary } from "~/components/ErrorBoundary";
+import { ThemeToggle } from "~/components/ThemeToggle";
 import {
   getWatchedAddresses,
   addWatchedAddress as addWatchedAddressLocal,
@@ -482,7 +483,20 @@ export default function Index() {
   const summary = aggregatePortfolio(portfolios);
 
   return (
-    <div className="dashboard">
+    <div className="bg-background min-h-screen p-3 sm:p-5 lg:p-8 max-w-7xl mx-auto">
+      {/* Header with Theme Toggle */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
+            ChainGlass
+          </h1>
+          <p className="text-sm text-text-secondary mt-1">
+            See through your crypto
+          </p>
+        </div>
+        <ThemeToggle />
+      </div>
+
       {/* Portfolio Summary */}
       <ErrorBoundary
         fallback={
@@ -566,10 +580,14 @@ export default function Index() {
 
       {/* Initial Loading State */}
       {navigation.state === "loading" && portfolios.length === 0 ? (
-        <div className="loading-state">
-          <div className="spinner"></div>
-          <h3>Loading your portfolio...</h3>
-          <p>Fetching balances from server cache</p>
+        <div className="text-center py-10 sm:py-[50px] lg:py-[60px] px-4 sm:px-5 bg-surface rounded-lg sm:rounded-[10px] lg:rounded-xl mt-5 sm:mt-6 lg:mt-8 shadow-sm">
+          <div className="mx-auto mb-5 sm:mb-[22px] lg:mb-6 w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 border-3 sm:border-[3px] lg:border-4 border-border border-t-brand-500 rounded-full animate-spin"></div>
+          <h3 className="text-[17px] sm:text-[19px] lg:text-xl font-semibold text-text-primary mb-[6px] sm:mb-[7px] lg:mb-2">
+            Loading your portfolio...
+          </h3>
+          <p className="text-sm sm:text-[15px] lg:text-base text-text-secondary">
+            Fetching balances from server cache
+          </p>
         </div>
       ) : (
         <>
@@ -584,9 +602,11 @@ export default function Index() {
                 </div>
               }
             >
-              <div className="addresses-section">
-                <h2>Tracked Addresses ({portfolios.length})</h2>
-                <div className="addresses-list">
+              <div className="mt-5 sm:mt-6 lg:mt-8">
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-text-primary mb-4 sm:mb-[18px] lg:mb-5 px-1">
+                  Tracked Addresses ({portfolios.length})
+                </h2>
+                <div className="flex flex-col">
                   {portfolios.map((portfolio) => (
                     <AddressCard
                       key={portfolio.addressId}
@@ -603,242 +623,18 @@ export default function Index() {
               </div>
             </ErrorBoundary>
           ) : (
-            <div className="empty-state">
-              <div className="empty-icon">📊</div>
-              <h3>No addresses tracked yet</h3>
-              <p>Add your first address above to see your portfolio</p>
+            <div className="text-center py-10 sm:py-[50px] lg:py-[60px] px-4 sm:px-5 bg-surface border-2 border-dashed border-border rounded-lg sm:rounded-[10px] lg:rounded-xl mt-5 sm:mt-6 lg:mt-8">
+              <div className="text-5xl sm:text-[56px] lg:text-[64px] mb-3 sm:mb-[14px] lg:mb-4">📊</div>
+              <h3 className="text-[17px] sm:text-[19px] lg:text-xl font-semibold text-text-primary mb-[6px] sm:mb-[7px] lg:mb-2">
+                No addresses tracked yet
+              </h3>
+              <p className="text-sm sm:text-[15px] lg:text-base text-text-secondary">
+                Add your first address above to see your portfolio
+              </p>
             </div>
           )}
         </>
       )}
-
-      <style>{`
-        /* Mobile-first base styles */
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-
-        body {
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-            Roboto, sans-serif;
-          background-color: #f9fafb;
-          color: #111827;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-
-        .dashboard {
-          max-width: 100%;
-          margin: 0 auto;
-          padding: 12px;
-          min-height: 100vh;
-        }
-
-        .addresses-section {
-          margin-top: 20px;
-        }
-
-        .addresses-section h2 {
-          font-size: 18px;
-          font-weight: 600;
-          color: #111827;
-          margin-bottom: 16px;
-          padding: 0 4px;
-        }
-
-        .addresses-list {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 40px 16px;
-          background: white;
-          border: 2px dashed #e5e7eb;
-          border-radius: 8px;
-          margin-top: 20px;
-        }
-
-        .empty-icon {
-          font-size: 48px;
-          margin-bottom: 12px;
-        }
-
-        .empty-state h3 {
-          font-size: 17px;
-          font-weight: 600;
-          color: #111827;
-          margin-bottom: 6px;
-        }
-
-        .empty-state p {
-          font-size: 14px;
-          color: #6b7280;
-        }
-
-        .loading-state {
-          text-align: center;
-          padding: 40px 16px;
-          background: white;
-          border-radius: 8px;
-          margin-top: 20px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .loading-state h3 {
-          font-size: 17px;
-          font-weight: 600;
-          color: #111827;
-          margin-bottom: 6px;
-        }
-
-        .loading-state p {
-          font-size: 14px;
-          color: #6b7280;
-        }
-
-        .spinner {
-          margin: 0 auto 20px;
-          width: 40px;
-          height: 40px;
-          border: 3px solid #e5e7eb;
-          border-top-color: #3b82f6;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        /* Tablet styles (640px+) */
-        @media (min-width: 640px) {
-          .dashboard {
-            padding: 20px;
-          }
-
-          .addresses-section {
-            margin-top: 24px;
-          }
-
-          .addresses-section h2 {
-            font-size: 20px;
-            margin-bottom: 18px;
-          }
-
-          .empty-state {
-            padding: 50px 20px;
-            border-radius: 10px;
-            margin-top: 24px;
-          }
-
-          .empty-icon {
-            font-size: 56px;
-            margin-bottom: 14px;
-          }
-
-          .empty-state h3 {
-            font-size: 19px;
-            margin-bottom: 7px;
-          }
-
-          .empty-state p {
-            font-size: 15px;
-          }
-
-          .loading-state {
-            padding: 50px 20px;
-            border-radius: 10px;
-            margin-top: 24px;
-          }
-
-          .loading-state h3 {
-            font-size: 19px;
-            margin-bottom: 7px;
-          }
-
-          .loading-state p {
-            font-size: 15px;
-          }
-
-          .spinner {
-            margin-bottom: 22px;
-            width: 44px;
-            height: 44px;
-          }
-        }
-
-        /* Desktop styles (1024px+) */
-        @media (min-width: 1024px) {
-          .dashboard {
-            max-width: 1200px;
-            padding: 32px 24px;
-          }
-
-          .addresses-section {
-            margin-top: 32px;
-          }
-
-          .addresses-section h2 {
-            font-size: 24px;
-            margin-bottom: 20px;
-          }
-
-          .empty-state {
-            padding: 60px 20px;
-            border-radius: 12px;
-            margin-top: 32px;
-          }
-
-          .empty-icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-          }
-
-          .empty-state h3 {
-            font-size: 20px;
-            margin-bottom: 8px;
-          }
-
-          .empty-state p {
-            font-size: 16px;
-          }
-
-          .loading-state {
-            padding: 60px 20px;
-            border-radius: 12px;
-            margin-top: 32px;
-          }
-
-          .loading-state h3 {
-            font-size: 20px;
-            margin-bottom: 8px;
-          }
-
-          .loading-state p {
-            font-size: 16px;
-          }
-
-          .spinner {
-            margin-bottom: 24px;
-            width: 48px;
-            height: 48px;
-            border-width: 4px;
-          }
-        }
-
-        /* Large desktop styles (1280px+) */
-        @media (min-width: 1280px) {
-          .dashboard {
-            padding: 32px 16px;
-          }
-        }
-      `}</style>
     </div>
   );
 }
