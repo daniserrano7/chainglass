@@ -2,8 +2,15 @@ import type { RenderToPipeableStreamOptions } from "react-dom/server";
 import { renderToPipeableStream } from "react-dom/server";
 import { ServerRouter } from "react-router";
 import type { AppLoadContext, EntryContext } from "react-router";
+import { startBackgroundRefresh } from "./lib/server/background-refresh.server";
 
 const ABORT_DELAY = 5000;
+
+// Initialize background refresh service on server start
+if (typeof process !== "undefined" && process.env.NODE_ENV !== "test") {
+  startBackgroundRefresh();
+  console.log("✓ Background cache refresh service started");
+}
 
 export default function handleRequest(
   request: Request,

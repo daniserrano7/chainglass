@@ -13,10 +13,10 @@ import {
   removeWatchedAddress,
   updateLastScanned,
   generateAddressId,
-  scanAddressComplete,
   aggregatePortfolio,
   getEnabledNetworks,
 } from "~/lib/services";
+import { scanAddressFromServer } from "~/lib/services/scanner-server";
 
 export const meta: MetaFunction = () => {
   return [
@@ -41,6 +41,7 @@ interface ScanState {
 export default function Index() {
   const [portfolios, setPortfolios] = useState<AddressPortfolio[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [scanState, setScanState] = useState<ScanState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,18 +54,32 @@ export default function Index() {
     const addresses = getWatchedAddresses();
 
     if (addresses.length === 0) {
+      setIsInitialLoading(false);
       return;
     }
 
-    // Scan each address
-    for (const address of addresses) {
-      await scanAddress(address, false);
+    setIsInitialLoading(true);
+
+    try {
+      // Scan each address
+      for (const address of addresses) {
+        try {
+          await scanAddress(address, false);
+        } catch (err) {
+          console.error(`Failed to scan address ${address.address}:`, err);
+          // Continue with other addresses even if one fails
+        }
+      }
+    } finally {
+      // Always clear loading state when done
+      setIsInitialLoading(false);
     }
   };
 
   const scanAddress = async (
     watchedAddress: WatchedAddress,
-    showProgress: boolean = true
+    showProgress: boolean = true,
+    forceRefresh: boolean = false
   ) => {
     try {
       const networks = getEnabledNetworks();
@@ -81,8 +96,8 @@ export default function Index() {
         });
       }
 
-      // Scan the address
-      const portfolio = await scanAddressComplete(
+      // Scan the address using server-side cache
+      const portfolio = await scanAddressFromServer(
         watchedAddress.id,
         watchedAddress.address,
         watchedAddress.label,
@@ -106,7 +121,8 @@ export default function Index() {
               };
             });
           }
-        }
+        },
+        forceRefresh
       );
 
       // Update portfolio in state
@@ -186,7 +202,7 @@ export default function Index() {
     setError(null);
 
     try {
-      await scanAddress(watchedAddress, true);
+      await scanAddress(watchedAddress, true, true); // Force refresh on manual rescan
     } catch (err) {
       console.error("Failed to rescan address:", err);
       setError(
@@ -258,32 +274,43 @@ export default function Index() {
       {/* Scan Progress */}
       {scanState && <ScanProgress networks={scanState.networks} />}
 
-      {/* Tracked Addresses */}
-      {portfolios.length > 0 ? (
-        <div className="addresses-section">
-          <h2>
-            Tracked Addresses ({portfolios.length})
-          </h2>
-          <div className="addresses-list">
-            {portfolios.map((portfolio) => (
-              <AddressCard
-                key={portfolio.addressId}
-                portfolio={portfolio}
-                onRescan={handleRescan}
-                onRemove={handleRemove}
-                isScanning={
-                  scanState?.addressId === portfolio.addressId || isLoading
-                }
-              />
-            ))}
-          </div>
+      {/* Initial Loading State */}
+      {isInitialLoading && portfolios.length === 0 ? (
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <h3>Loading your portfolio...</h3>
+          <p>Fetching balances from server cache</p>
         </div>
       ) : (
-        <div className="empty-state">
-          <div className="empty-icon">📊</div>
-          <h3>No addresses tracked yet</h3>
-          <p>Add your first address above to see your portfolio</p>
-        </div>
+        <>
+          {/* Tracked Addresses */}
+          {portfolios.length > 0 ? (
+            <div className="addresses-section">
+              <h2>
+                Tracked Addresses ({portfolios.length})
+              </h2>
+              <div className="addresses-list">
+                {portfolios.map((portfolio) => (
+                  <AddressCard
+                    key={portfolio.addressId}
+                    portfolio={portfolio}
+                    onRescan={handleRescan}
+                    onRemove={handleRemove}
+                    isScanning={
+                      scanState?.addressId === portfolio.addressId || isLoading
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <div className="empty-icon">📊</div>
+              <h3>No addresses tracked yet</h3>
+              <p>Add your first address above to see your portfolio</p>
+            </div>
+          )}
+        </>
       )}
 
       <style>{`
@@ -383,6 +410,43 @@ export default function Index() {
         .empty-state p {
           font-size: 16px;
           color: #6b7280;
+        }
+
+        .loading-state {
+          text-align: center;
+          padding: 60px 20px;
+          background: white;
+          border-radius: 12px;
+          margin-top: 32px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-state h3 {
+          font-size: 20px;
+          font-weight: 600;
+          color: #111827;
+          margin-bottom: 8px;
+        }
+
+        .loading-state p {
+          font-size: 16px;
+          color: #6b7280;
+        }
+
+        .spinner {
+          margin: 0 auto 24px;
+          width: 48px;
+          height: 48px;
+          border: 4px solid #e5e7eb;
+          border-top-color: #3b82f6;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
         }
 
         @media (max-width: 768px) {
