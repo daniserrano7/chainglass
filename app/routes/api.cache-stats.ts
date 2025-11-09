@@ -4,7 +4,8 @@
  * POST /api/cache-stats?action=clear&type=prices|balances - Clear caches
  */
 
-import { json, type LoaderFunctionArgs, type ActionFunctionArgs } from "react-router";
+
+import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
 import { getPriceCacheStats, clearPriceCache } from "../lib/server/prices.server";
 import { getAllCacheStats, clearAllBalanceCaches, clearUserBalanceCache } from "../lib/server/balances.server";
 
@@ -13,14 +14,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const priceStats = getPriceCacheStats();
     const balanceStats = getAllCacheStats();
 
-    return json({
+    return Response.json({
       prices: priceStats,
       balances: balanceStats,
       timestamp: Date.now(),
     });
   } catch (error) {
     console.error("Error in /api/cache-stats:", error);
-    return json(
+    return Response.json(
       {
         error: error instanceof Error ? error.message : "Unknown error",
       },
@@ -39,27 +40,27 @@ export async function action({ request }: ActionFunctionArgs) {
     try {
       if (type === "prices") {
         clearPriceCache();
-        return json({ success: true, message: "Price cache cleared" });
+        return Response.json({ success: true, message: "Price cache cleared" });
       } else if (type === "balances") {
         if (address) {
           clearUserBalanceCache(address);
-          return json({
+          return Response.json({
             success: true,
             message: `Balance cache cleared for ${address}`,
           });
         } else {
           clearAllBalanceCaches();
-          return json({ success: true, message: "All balance caches cleared" });
+          return Response.json({ success: true, message: "All balance caches cleared" });
         }
       } else {
-        return json(
+        return Response.json(
           { error: "Invalid cache type. Use 'prices' or 'balances'" },
           { status: 400 }
         );
       }
     } catch (error) {
       console.error("Error clearing cache:", error);
-      return json(
+      return Response.json(
         {
           error: error instanceof Error ? error.message : "Unknown error",
         },
@@ -68,5 +69,5 @@ export async function action({ request }: ActionFunctionArgs) {
     }
   }
 
-  return json({ error: "Invalid action" }, { status: 400 });
+  return Response.json({ error: "Invalid action" }, { status: 400 });
 }

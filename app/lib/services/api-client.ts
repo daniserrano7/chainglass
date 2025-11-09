@@ -2,7 +2,7 @@
  * Client-side API service for fetching cached data from the server
  */
 
-import type { NetworkBalance } from "../types/portfolio";
+import type { NetworkBalance } from "../types/balance";
 
 export interface PriceApiResponse {
   prices: Record<string, number>;

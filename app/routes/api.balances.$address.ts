@@ -3,7 +3,8 @@
  * GET /api/balances/:address?networks=ethereum,polygon&forceRefresh=false&includeStats=false
  */
 
-import { json, type LoaderFunctionArgs } from "react-router";
+
+import type { LoaderFunctionArgs } from "react-router";
 import {
   scanAddress,
   getBalanceCacheStats,
@@ -14,12 +15,12 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   const { address } = params;
 
   if (!address) {
-    return json({ error: "Missing address parameter" }, { status: 400 });
+    return Response.json({ error: "Missing address parameter" }, { status: 400 });
   }
 
   // Validate address format (basic check)
   if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-    return json({ error: "Invalid Ethereum address format" }, { status: 400 });
+    return Response.json({ error: "Invalid Ethereum address format" }, { status: 400 });
   }
 
   const url = new URL(request.url);
@@ -56,10 +57,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       response.cacheStats = getBalanceCacheStats(address);
     }
 
-    return json(response);
+    return Response.json(response);
   } catch (error) {
     console.error(`Error in /api/balances/${address}:`, error);
-    return json(
+    return Response.json(
       {
         error: error instanceof Error ? error.message : "Unknown error",
       },
