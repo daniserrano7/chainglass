@@ -1,11 +1,80 @@
 import type { PortfolioSummary as PortfolioSummaryType } from "~/lib/types";
 import { formatUsdValue } from "~/lib/services";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 
 interface PortfolioSummaryProps {
   summary: PortfolioSummaryType;
 }
 
+// Color palette for charts
+const CHART_COLORS = [
+  "#a78bfa", // Purple 400
+  "#c084fc", // Purple 300
+  "#e9d5ff", // Purple 200
+  "#8b5cf6", // Purple 500
+  "#7c3aed", // Purple 600
+  "#6d28d9", // Purple 700
+  "#f3e8ff", // Purple 100
+  "#ddd6fe", // Purple 200 variant
+];
+
+// Custom tooltip for charts
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div
+        style={{
+          background: "rgba(0, 0, 0, 0.9)",
+          padding: "12px 16px",
+          borderRadius: "8px",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+        }}
+      >
+        <p style={{ margin: 0, color: "#fff", fontWeight: 600, fontSize: "14px" }}>
+          {payload[0].name}
+        </p>
+        <p style={{ margin: "4px 0 0 0", color: "#a78bfa", fontSize: "13px" }}>
+          {formatUsdValue(payload[0].value)}
+        </p>
+        {payload[0].payload.percentage !== undefined && (
+          <p style={{ margin: "2px 0 0 0", color: "#c4b5fd", fontSize: "12px" }}>
+            {payload[0].payload.percentage.toFixed(1)}%
+          </p>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
+
 export function PortfolioSummary({ summary }: PortfolioSummaryProps) {
+  // Prepare chart data
+  const networkChartData = summary.networkBreakdown.map((network) => ({
+    name: network.networkName,
+    value: network.totalUsdValue,
+    percentage: network.percentage,
+  }));
+
+  const assetChartData = summary.assetBreakdown
+    ? summary.assetBreakdown.slice(0, 10).map((asset) => ({
+        name: asset.symbol,
+        value: asset.totalUsdValue,
+        percentage: asset.percentage,
+      }))
+    : [];
+
   return (
     <div className="portfolio-summary">
       <div className="summary-header">
@@ -24,26 +93,55 @@ export function PortfolioSummary({ summary }: PortfolioSummaryProps) {
       {summary.networkBreakdown.length > 0 && (
         <div className="breakdown-section">
           <h3>Breakdown by Network</h3>
-          <div className="breakdown-list">
-            {summary.networkBreakdown.map((network) => (
-              <div key={network.networkId} className="breakdown-item">
-                <div className="breakdown-info">
-                  <span className="breakdown-name">{network.networkName}</span>
-                  <span className="breakdown-percentage">
-                    {network.percentage.toFixed(1)}%
-                  </span>
+          <div className="chart-grid">
+            <div className="chart-container">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={networkChartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percentage }) => `${name} (${percentage.toFixed(1)}%)`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {networkChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="breakdown-list">
+              {summary.networkBreakdown.map((network, index) => (
+                <div key={network.networkId} className="breakdown-item">
+                  <div className="breakdown-info">
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <div
+                        className="legend-dot"
+                        style={{ background: CHART_COLORS[index % CHART_COLORS.length] }}
+                      />
+                      <span className="breakdown-name">{network.networkName}</span>
+                    </div>
+                    <span className="breakdown-percentage">
+                      {network.percentage.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="breakdown-bar-container">
+                    <div
+                      className="breakdown-bar"
+                      style={{ width: `${network.percentage}%` }}
+                    />
+                  </div>
+                  <div className="breakdown-value">
+                    {formatUsdValue(network.totalUsdValue)}
+                  </div>
                 </div>
-                <div className="breakdown-bar-container">
-                  <div
-                    className="breakdown-bar"
-                    style={{ width: `${network.percentage}%` }}
-                  />
-                </div>
-                <div className="breakdown-value">
-                  {formatUsdValue(network.totalUsdValue)}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -51,23 +149,63 @@ export function PortfolioSummary({ summary }: PortfolioSummaryProps) {
       {summary.assetBreakdown && summary.assetBreakdown.length > 0 && (
         <div className="breakdown-section">
           <h3>Top Assets</h3>
-          <div className="assets-list">
-            {summary.assetBreakdown.slice(0, 10).map((asset) => (
-              <div key={asset.symbol} className="asset-item">
-                <div className="asset-info">
-                  <span className="asset-symbol">{asset.symbol}</span>
-                  <span className="asset-amount">{asset.totalAmount}</span>
+          <div className="chart-grid">
+            <div className="chart-container">
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart
+                  data={assetChartData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.1)" />
+                  <XAxis
+                    type="number"
+                    stroke="#fff"
+                    tick={{ fill: "#fff", fontSize: 12 }}
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    stroke="#fff"
+                    tick={{ fill: "#fff", fontSize: 12 }}
+                    width={80}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="value" radius={[0, 8, 8, 0]}>
+                    {assetChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="assets-list">
+              {summary.assetBreakdown.slice(0, 10).map((asset, index) => (
+                <div key={asset.symbol} className="asset-item">
+                  <div className="asset-info">
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <div
+                        className="legend-dot"
+                        style={{ background: CHART_COLORS[index % CHART_COLORS.length] }}
+                      />
+                      <div>
+                        <div className="asset-symbol">{asset.symbol}</div>
+                        <div className="asset-amount">{asset.totalAmount}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="asset-value-info">
+                    <span className="asset-value">
+                      {formatUsdValue(asset.totalUsdValue)}
+                    </span>
+                    <span className="asset-percentage">
+                      {asset.percentage.toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
-                <div className="asset-value-info">
-                  <span className="asset-value">
-                    {formatUsdValue(asset.totalUsdValue)}
-                  </span>
-                  <span className="asset-percentage">
-                    {asset.percentage.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -144,10 +282,30 @@ export function PortfolioSummary({ summary }: PortfolioSummaryProps) {
           font-weight: 600;
         }
 
+        .chart-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 24px;
+          align-items: start;
+        }
+
+        .chart-container {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 8px;
+          padding: 20px;
+        }
+
         .breakdown-list {
           display: flex;
           flex-direction: column;
           gap: 16px;
+        }
+
+        .legend-dot {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          flex-shrink: 0;
         }
 
         .breakdown-item {
@@ -250,6 +408,15 @@ export function PortfolioSummary({ summary }: PortfolioSummaryProps) {
 
           .total-value {
             font-size: 36px;
+          }
+
+          .chart-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+
+          .chart-container {
+            padding: 16px;
           }
         }
       `}</style>
