@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import type { MetaFunction } from "react-router";
+import type { MetaFunction, LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
+import { json, useLoaderData, useActionData, useNavigation, useRevalidator } from "react-router";
 import type { ChainFamily, AddressPortfolio, WatchedAddress, Network } from "~/lib/types";
 import { AddAddressForm } from "~/components/AddAddressForm";
 import { AddressCard } from "~/components/AddressCard";
@@ -11,14 +12,24 @@ import { ErrorDisplay } from "~/components/ErrorDisplay";
 import { ErrorBoundary } from "~/components/ErrorBoundary";
 import {
   getWatchedAddresses,
-  addWatchedAddress,
-  removeWatchedAddress,
+  addWatchedAddress as addWatchedAddressLocal,
+  removeWatchedAddress as removeWatchedAddressLocal,
   updateLastScanned,
   generateAddressId,
   aggregatePortfolio,
   getEnabledNetworks,
+  getEnabledNetworksForFamily,
 } from "~/lib/services";
 import { scanAddressFromServer } from "~/lib/services/scanner-server";
+import {
+  syncAddressesToCookies,
+  hasAddressesInCookies,
+} from "~/lib/services/cookie-sync";
+import { scanAddress } from "~/lib/server/balances.server";
+import {
+  getWatchedAddressesFromCookies,
+  createAddressesCookieHeaders,
+} from "~/lib/server/cookies.server";
 
 export const meta: MetaFunction = () => {
   return [
@@ -29,6 +40,179 @@ export const meta: MetaFunction = () => {
     },
   ];
 };
+
+/**
+ * Server-side loader: Pre-fetch addresses and their balances
+ * This enables SSR by making data available on initial page load
+ */
+export async function loader({ request }: LoaderFunctionArgs) {
+  // Get addresses from cookies
+  const addresses = getWatchedAddressesFromCookies(request);
+
+  if (addresses.length === 0) {
+    return json({
+      portfolios: [],
+      addresses: [],
+      loadedFromCache: false,
+    });
+  }
+
+  // Pre-fetch all balances in parallel using server cache
+  const portfolioResults = await Promise.allSettled(
+    addresses.map(async (addr) => {
+      try {
+        const result = await scanAddress(addr.address, {
+          forceRefresh: false, // Use cache when available
+          networksToScan: getEnabledNetworksForFamily(addr.chainFamily).map(
+            (n) => n.id
+          ),
+        });
+
+        // Convert to AddressPortfolio format
+        const portfolio: AddressPortfolio = {
+          addressId: addr.id,
+          address: addr.address,
+          label: addr.label,
+          networkBalances: result.balances,
+          totalUsdValue: result.totalUsdValue,
+        };
+
+        return portfolio;
+      } catch (error) {
+        console.error(`Failed to load portfolio for ${addr.address}:`, error);
+        // Return empty portfolio on error
+        return {
+          addressId: addr.id,
+          address: addr.address,
+          label: addr.label,
+          networkBalances: [],
+          totalUsdValue: 0,
+        } as AddressPortfolio;
+      }
+    })
+  );
+
+  // Extract successful results
+  const portfolios = portfolioResults
+    .filter((r) => r.status === "fulfilled")
+    .map((r) => (r as PromiseFulfilledResult<AddressPortfolio>).value);
+
+  return json({
+    portfolios,
+    addresses,
+    loadedFromCache: true,
+  });
+}
+
+/**
+ * Server-side action: Handle address add/remove/rescan with cookie updates
+ */
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const actionType = formData.get("action");
+
+  // Get current addresses from cookies
+  let addresses = getWatchedAddressesFromCookies(request);
+
+  switch (actionType) {
+    case "add": {
+      const address = formData.get("address") as string;
+      const chainFamily = formData.get("chainFamily") as ChainFamily;
+      const label = formData.get("label") as string | undefined;
+
+      if (!address || !chainFamily) {
+        return json(
+          { error: "Address and chain family are required" },
+          { status: 400 }
+        );
+      }
+
+      // Create new watched address
+      const newAddress: WatchedAddress = {
+        id: generateAddressId(),
+        address,
+        chainFamily,
+        label: label || undefined,
+        addedAt: Date.now(),
+        networksScanned: [],
+      };
+
+      // Add to addresses array
+      addresses.push(newAddress);
+
+      // Update cookies and return
+      const headers = createAddressesCookieHeaders(addresses);
+      return json(
+        { success: true, address: newAddress },
+        { headers: { "Set-Cookie": headers } }
+      );
+    }
+
+    case "remove": {
+      const addressId = formData.get("addressId") as string;
+
+      if (!addressId) {
+        return json({ error: "Address ID is required" }, { status: 400 });
+      }
+
+      // Remove from addresses array
+      addresses = addresses.filter((a) => a.id !== addressId);
+
+      // Update cookies and return
+      const headers = createAddressesCookieHeaders(addresses);
+      return json(
+        { success: true, addressId },
+        { headers: { "Set-Cookie": headers } }
+      );
+    }
+
+    case "rescan": {
+      const addressId = formData.get("addressId") as string;
+      const forceRefresh = formData.get("forceRefresh") === "true";
+
+      if (!addressId) {
+        return json({ error: "Address ID is required" }, { status: 400 });
+      }
+
+      const address = addresses.find((a) => a.id === addressId);
+      if (!address) {
+        return json({ error: "Address not found" }, { status: 404 });
+      }
+
+      // Rescan the address
+      try {
+        const result = await scanAddress(address.address, {
+          forceRefresh,
+          networksToScan: getEnabledNetworksForFamily(
+            address.chainFamily
+          ).map((n) => n.id),
+        });
+
+        const portfolio: AddressPortfolio = {
+          addressId: address.id,
+          address: address.address,
+          label: address.label,
+          networkBalances: result.balances,
+          totalUsdValue: result.totalUsdValue,
+        };
+
+        return json({ success: true, portfolio });
+      } catch (error) {
+        console.error(`Failed to rescan address ${address.address}:`, error);
+        return json(
+          {
+            error:
+              error instanceof Error ? error.message : "Failed to rescan",
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    default:
+      return json({ error: "Invalid action" }, { status: 400 });
+  }
+}
 
 interface ScanState {
   addressId: string;
@@ -41,44 +225,72 @@ interface ScanState {
 }
 
 export default function Index() {
-  const [portfolios, setPortfolios] = useState<AddressPortfolio[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  // Get data from server-side loader
+  const loaderData = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
+  const navigation = useNavigation();
+  const revalidator = useRevalidator();
+
+  // Client-side state for UI only
+  const [portfolios, setPortfolios] = useState<AddressPortfolio[]>(
+    loaderData.portfolios
+  );
   const [scanState, setScanState] = useState<ScanState | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cookiesSynced, setCookiesSynced] = useState(false);
 
-  // Load addresses on mount and scan them
+  // Sync loader data to state when it changes
   useEffect(() => {
-    loadAndScanAddresses();
-  }, []);
+    setPortfolios(loaderData.portfolios);
+  }, [loaderData]);
 
-  const loadAndScanAddresses = async () => {
-    const addresses = getWatchedAddresses();
+  // Migration: Sync localStorage to cookies on first visit
+  useEffect(() => {
+    if (cookiesSynced) return;
 
-    if (addresses.length === 0) {
-      setIsInitialLoading(false);
-      return;
-    }
+    const syncLocalStorageToCookies = () => {
+      try {
+        // Check if we have addresses in localStorage but not in cookies
+        const localAddresses = getWatchedAddresses();
 
-    setIsInitialLoading(true);
+        if (localAddresses.length > 0 && !hasAddressesInCookies()) {
+          console.log(
+            `Migrating ${localAddresses.length} addresses from localStorage to cookies...`
+          );
 
-    try {
-      // Scan each address
-      for (const address of addresses) {
-        try {
-          await scanAddress(address, false);
-        } catch (err) {
-          console.error(`Failed to scan address ${address.address}:`, err);
-          // Continue with other addresses even if one fails
+          // Sync to cookies client-side
+          syncAddressesToCookies(localAddresses);
+
+          // Trigger a revalidation to reload with cookie data
+          setTimeout(() => {
+            revalidator.revalidate();
+          }, 100);
+        } else if (
+          localAddresses.length === 0 &&
+          loaderData.addresses.length > 0
+        ) {
+          // Reverse sync: cookies exist but localStorage is empty
+          // Sync from cookies to localStorage
+          console.log(
+            `Syncing ${loaderData.addresses.length} addresses from cookies to localStorage...`
+          );
+          loaderData.addresses.forEach((addr) => {
+            addWatchedAddressLocal(addr);
+          });
         }
-      }
-    } finally {
-      // Always clear loading state when done
-      setIsInitialLoading(false);
-    }
-  };
 
-  const scanAddress = async (
+        setCookiesSynced(true);
+      } catch (err) {
+        console.error("Failed to sync localStorage to cookies:", err);
+        setCookiesSynced(true); // Don't block on error
+      }
+    };
+
+    syncLocalStorageToCookies();
+  }, [cookiesSynced, loaderData.addresses, revalidator]);
+
+  // Client-side scanning for progress UI (when user manually adds/rescans)
+  const scanAddressClient = async (
     watchedAddress: WatchedAddress,
     showProgress: boolean = true,
     forceRefresh: boolean = false
@@ -161,11 +373,10 @@ export default function Index() {
     chainFamily: ChainFamily,
     label?: string
   ) => {
-    setIsLoading(true);
     setError(null);
 
     try {
-      // Create watched address
+      // Create new address
       const watchedAddress: WatchedAddress = {
         id: generateAddressId(),
         address,
@@ -175,23 +386,40 @@ export default function Index() {
         networksScanned: [],
       };
 
-      // Save to localStorage
-      addWatchedAddress(watchedAddress);
+      // Save to localStorage as fallback
+      addWatchedAddressLocal(watchedAddress);
 
-      // Scan the address
-      await scanAddress(watchedAddress, true);
+      // Sync to cookies client-side (for immediate cookie update)
+      const updatedAddresses = [...loaderData.addresses, watchedAddress];
+      syncAddressesToCookies(updatedAddresses);
+
+      // Submit to server action to confirm
+      const formData = new FormData();
+      formData.append("action", "add");
+      formData.append("address", address);
+      formData.append("chainFamily", chainFamily);
+      if (label) formData.append("label", label);
+
+      await fetch("?index", {
+        method: "POST",
+        body: formData,
+      });
+
+      // Scan the newly added address with progress UI
+      await scanAddressClient(watchedAddress, true);
+
+      // Revalidate to get fresh data from server
+      revalidator.revalidate();
     } catch (err) {
       console.error("Failed to add address:", err);
       setError(
         err instanceof Error ? err.message : "Failed to add address"
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleRescan = async (addressId: string) => {
-    const watchedAddress = getWatchedAddresses().find(
+    const watchedAddress = loaderData.addresses.find(
       (a) => a.id === addressId
     );
 
@@ -200,25 +428,48 @@ export default function Index() {
       return;
     }
 
-    setIsLoading(true);
     setError(null);
 
     try {
-      await scanAddress(watchedAddress, true, true); // Force refresh on manual rescan
+      // Show progress UI while rescanning
+      await scanAddressClient(watchedAddress, true, true);
+
+      // Revalidate to get fresh data from server
+      revalidator.revalidate();
     } catch (err) {
       console.error("Failed to rescan address:", err);
       setError(
         err instanceof Error ? err.message : "Failed to rescan address"
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleRemove = (addressId: string) => {
+  const handleRemove = async (addressId: string) => {
     try {
-      removeWatchedAddress(addressId);
+      // Remove from localStorage as fallback
+      removeWatchedAddressLocal(addressId);
+
+      // Sync to cookies client-side (for immediate cookie update)
+      const updatedAddresses = loaderData.addresses.filter(
+        (a) => a.id !== addressId
+      );
+      syncAddressesToCookies(updatedAddresses);
+
+      // Submit to server action to remove from cookies
+      const formData = new FormData();
+      formData.append("action", "remove");
+      formData.append("addressId", addressId);
+
+      await fetch("?index", {
+        method: "POST",
+        body: formData,
+      });
+
+      // Optimistically update UI
       setPortfolios((prev) => prev.filter((p) => p.addressId !== addressId));
+
+      // Revalidate to get fresh data from server
+      revalidator.revalidate();
     } catch (err) {
       console.error("Failed to remove address:", err);
       setError(
@@ -251,7 +502,10 @@ export default function Index() {
           </div>
         }
       >
-        <AddAddressForm onAddAddress={handleAddAddress} isLoading={isLoading} />
+        <AddAddressForm
+          onAddAddress={handleAddAddress}
+          isLoading={navigation.state === "submitting"}
+        />
       </ErrorBoundary>
 
       {/* Network Manager */}
@@ -266,10 +520,11 @@ export default function Index() {
           onNetworkAdded={(network) => {
             console.log("Network added:", network);
             // Rescan all addresses to fetch balances for the new network
-            const addresses = getWatchedAddresses();
-            addresses.forEach((addr) => {
-              scanAddress(addr, false);
+            loaderData.addresses.forEach((addr) => {
+              scanAddressClient(addr, false);
             });
+            // Revalidate to refresh data
+            revalidator.revalidate();
           }}
         />
       </ErrorBoundary>
@@ -286,10 +541,11 @@ export default function Index() {
           onTokenAdded={(token) => {
             console.log("Token added:", token);
             // Rescan all addresses to fetch balances for the new token
-            const addresses = getWatchedAddresses();
-            addresses.forEach((addr) => {
-              scanAddress(addr, false);
+            loaderData.addresses.forEach((addr) => {
+              scanAddressClient(addr, false);
             });
+            // Revalidate to refresh data
+            revalidator.revalidate();
           }}
         />
       </ErrorBoundary>
@@ -300,7 +556,7 @@ export default function Index() {
         onDismiss={() => setError(null)}
         onRetry={() => {
           setError(null);
-          loadAndScanAddresses();
+          revalidator.revalidate();
         }}
         className="mb-6"
       />
@@ -309,7 +565,7 @@ export default function Index() {
       {scanState && <ScanProgress networks={scanState.networks} />}
 
       {/* Initial Loading State */}
-      {isInitialLoading && portfolios.length === 0 ? (
+      {navigation.state === "loading" && portfolios.length === 0 ? (
         <div className="loading-state">
           <div className="spinner"></div>
           <h3>Loading your portfolio...</h3>
@@ -338,7 +594,8 @@ export default function Index() {
                       onRescan={handleRescan}
                       onRemove={handleRemove}
                       isScanning={
-                        scanState?.addressId === portfolio.addressId || isLoading
+                        scanState?.addressId === portfolio.addressId ||
+                        navigation.state === "submitting"
                       }
                     />
                   ))}
