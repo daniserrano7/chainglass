@@ -35,6 +35,8 @@ dist-ssr
 *.swo
 *.sw?
 *~
+
+# Editor directories and files
 *.suo
 *.ntvs*
 *.njsproj
