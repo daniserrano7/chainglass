@@ -702,18 +702,111 @@ export function NetworkManager({ onNetworkAdded }: NetworkManagerProps) {
           font-size: 16px;
         }
 
-        @media (max-width: 768px) {
+        /* Mobile-first responsive adjustments */
+        @media (max-width: 639px) {
+          .network-manager {
+            margin-bottom: 16px;
+          }
+
           .network-header {
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
+            margin-bottom: 16px;
+          }
+
+          .network-header h2 {
+            font-size: 18px;
+          }
+
+          .subtitle {
+            font-size: 13px;
+          }
+
+          .btn-primary {
+            width: 100%;
+            min-height: 48px;
+            padding: 12px 20px;
+          }
+
+          .add-network-form {
+            padding: 16px;
+            margin-bottom: 16px;
+          }
+
+          .add-network-form h3 {
+            font-size: 17px;
+            margin-bottom: 16px;
           }
 
           .form-row {
             grid-template-columns: 1fr;
           }
 
+          .form-group input,
+          .form-group select {
+            font-size: 16px;
+            padding: 12px;
+            min-height: 44px;
+          }
+
+          .form-actions {
+            flex-direction: column-reverse;
+          }
+
+          .form-actions button {
+            width: 100%;
+            min-height: 48px;
+          }
+
+          .network-family {
+            padding: 16px;
+          }
+
+          .network-family h3 {
+            font-size: 17px;
+            margin-bottom: 12px;
+          }
+
           .network-grid {
             grid-template-columns: 1fr;
+          }
+
+          .network-card {
+            padding: 14px;
+          }
+
+          .network-card h4 {
+            font-size: 15px;
+          }
+
+          .detail-row {
+            font-size: 13px;
+          }
+        }
+
+        @media (min-width: 640px) {
+          .btn-primary {
+            width: auto;
+          }
+
+          .form-actions {
+            flex-direction: row;
+          }
+
+          .form-actions button {
+            width: auto;
+          }
+        }
+
+        @media (min-width: 768px) {
+          .network-header {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+          }
+
+          .network-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
           }
         }
       `}</style>

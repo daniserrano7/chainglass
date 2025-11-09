@@ -634,18 +634,132 @@ export function TokenManager({ onTokenAdded }: TokenManagerProps) {
           font-size: 16px;
         }
 
-        @media (max-width: 768px) {
+        /* Mobile-first responsive adjustments */
+        @media (max-width: 639px) {
+          .token-manager {
+            margin-bottom: 16px;
+          }
+
           .token-header {
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
+            margin-bottom: 16px;
+          }
+
+          .token-header h2 {
+            font-size: 18px;
+          }
+
+          .subtitle {
+            font-size: 13px;
+          }
+
+          .btn-primary {
+            width: 100%;
+            min-height: 48px;
+            padding: 12px 20px;
+          }
+
+          .add-token-form {
+            padding: 16px;
+            margin-bottom: 16px;
+          }
+
+          .add-token-form h3 {
+            font-size: 17px;
+            margin-bottom: 16px;
           }
 
           .form-row {
             grid-template-columns: 1fr;
           }
 
+          .form-group input,
+          .form-group select {
+            font-size: 16px;
+            padding: 12px;
+            min-height: 44px;
+          }
+
+          .form-group .hint {
+            font-size: 11px;
+          }
+
+          .form-actions {
+            flex-direction: column-reverse;
+          }
+
+          .form-actions button {
+            width: 100%;
+            min-height: 48px;
+          }
+
+          .token-network {
+            padding: 16px;
+          }
+
+          .token-network h3 {
+            font-size: 17px;
+            margin-bottom: 12px;
+          }
+
+          .network-info {
+            font-size: 11px;
+            margin-bottom: 12px;
+          }
+
           .token-grid {
             grid-template-columns: 1fr;
+          }
+
+          .token-card {
+            padding: 14px;
+          }
+
+          .token-card h4 {
+            font-size: 15px;
+          }
+
+          .token-name {
+            font-size: 11px;
+          }
+
+          .detail-row {
+            font-size: 11px;
+          }
+
+          .price-tracking {
+            font-size: 11px;
+          }
+        }
+
+        @media (min-width: 640px) {
+          .btn-primary {
+            width: auto;
+          }
+
+          .form-actions {
+            flex-direction: row;
+          }
+
+          .form-actions button {
+            width: auto;
+          }
+
+          .token-grid {
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          }
+        }
+
+        @media (min-width: 768px) {
+          .token-header {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+          }
+
+          .token-grid {
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
           }
         }
       `}</style>

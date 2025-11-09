@@ -43,28 +43,30 @@ export function ScanProgress({ networks }: ScanProgressProps) {
       </div>
 
       <style>{`
+        /* Mobile-first base styles */
         .scan-progress {
           background: white;
           border: 1px solid #e5e7eb;
           border-radius: 8px;
-          padding: 20px;
-          margin-bottom: 16px;
+          padding: 16px;
+          margin-bottom: 12px;
         }
 
         .progress-header {
           display: flex;
-          justify-content: space-between;
-          align-items: center;
+          flex-direction: column;
+          gap: 8px;
           margin-bottom: 12px;
         }
 
         .progress-title {
           font-weight: 600;
           color: #111827;
+          font-size: 15px;
         }
 
         .progress-count {
-          font-size: 14px;
+          font-size: 13px;
           color: #6b7280;
         }
 
@@ -73,7 +75,7 @@ export function ScanProgress({ networks }: ScanProgressProps) {
           background-color: #e5e7eb;
           border-radius: 4px;
           overflow: hidden;
-          margin-bottom: 16px;
+          margin-bottom: 14px;
         }
 
         .progress-bar {
@@ -85,17 +87,18 @@ export function ScanProgress({ networks }: ScanProgressProps) {
 
         .networks-status {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 8px;
+          grid-template-columns: 1fr;
+          gap: 6px;
         }
 
         .network-status {
           display: flex;
           align-items: center;
           gap: 8px;
-          padding: 8px 12px;
+          padding: 10px 12px;
           border-radius: 6px;
-          font-size: 14px;
+          font-size: 13px;
+          min-height: 40px;
         }
 
         .status-pending {
@@ -120,6 +123,7 @@ export function ScanProgress({ networks }: ScanProgressProps) {
 
         .status-icon {
           font-size: 16px;
+          flex-shrink: 0;
         }
 
         .status-scanning .status-icon {
@@ -137,12 +141,81 @@ export function ScanProgress({ networks }: ScanProgressProps) {
 
         .network-name {
           font-weight: 500;
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .error-text {
-          font-size: 12px;
+          font-size: 11px;
           opacity: 0.8;
-          margin-left: auto;
+          flex-shrink: 0;
+          max-width: 40%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        /* Tablet styles (480px+) */
+        @media (min-width: 480px) {
+          .networks-status {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+          }
+
+          .progress-header {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+          }
+        }
+
+        /* Tablet styles (640px+) */
+        @media (min-width: 640px) {
+          .scan-progress {
+            padding: 18px;
+            margin-bottom: 14px;
+          }
+
+          .progress-title {
+            font-size: 16px;
+          }
+
+          .progress-count {
+            font-size: 14px;
+          }
+
+          .progress-bar-container {
+            margin-bottom: 16px;
+          }
+
+          .network-status {
+            font-size: 14px;
+            padding: 8px 12px;
+          }
+
+          .error-text {
+            font-size: 12px;
+            max-width: 50%;
+          }
+        }
+
+        /* Desktop styles (1024px+) */
+        @media (min-width: 1024px) {
+          .scan-progress {
+            padding: 20px;
+            margin-bottom: 16px;
+          }
+
+          .networks-status {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          }
+
+          .error-text {
+            max-width: none;
+            margin-left: auto;
+          }
         }
       `}</style>
     </div>

@@ -356,6 +356,7 @@ export default function Index() {
       )}
 
       <style>{`
+        /* Mobile-first base styles */
         * {
           margin: 0;
           padding: 0;
@@ -367,23 +368,27 @@ export default function Index() {
             Roboto, sans-serif;
           background-color: #f9fafb;
           color: #111827;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
         }
 
         .dashboard {
-          max-width: 1200px;
+          max-width: 100%;
           margin: 0 auto;
-          padding: 32px 16px;
+          padding: 12px;
+          min-height: 100vh;
         }
 
         .addresses-section {
-          margin-top: 32px;
+          margin-top: 20px;
         }
 
         .addresses-section h2 {
-          font-size: 24px;
+          font-size: 18px;
           font-weight: 600;
           color: #111827;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
+          padding: 0 4px;
         }
 
         .addresses-list {
@@ -393,56 +398,56 @@ export default function Index() {
 
         .empty-state {
           text-align: center;
-          padding: 60px 20px;
+          padding: 40px 16px;
           background: white;
           border: 2px dashed #e5e7eb;
-          border-radius: 12px;
-          margin-top: 32px;
+          border-radius: 8px;
+          margin-top: 20px;
         }
 
         .empty-icon {
-          font-size: 64px;
-          margin-bottom: 16px;
+          font-size: 48px;
+          margin-bottom: 12px;
         }
 
         .empty-state h3 {
-          font-size: 20px;
+          font-size: 17px;
           font-weight: 600;
           color: #111827;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
         }
 
         .empty-state p {
-          font-size: 16px;
+          font-size: 14px;
           color: #6b7280;
         }
 
         .loading-state {
           text-align: center;
-          padding: 60px 20px;
+          padding: 40px 16px;
           background: white;
-          border-radius: 12px;
-          margin-top: 32px;
+          border-radius: 8px;
+          margin-top: 20px;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .loading-state h3 {
-          font-size: 20px;
+          font-size: 17px;
           font-weight: 600;
           color: #111827;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
         }
 
         .loading-state p {
-          font-size: 16px;
+          font-size: 14px;
           color: #6b7280;
         }
 
         .spinner {
-          margin: 0 auto 24px;
-          width: 48px;
-          height: 48px;
-          border: 4px solid #e5e7eb;
+          margin: 0 auto 20px;
+          width: 40px;
+          height: 40px;
+          border: 3px solid #e5e7eb;
           border-top-color: #3b82f6;
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
@@ -454,13 +459,126 @@ export default function Index() {
           }
         }
 
-        @media (max-width: 768px) {
+        /* Tablet styles (640px+) */
+        @media (min-width: 640px) {
           .dashboard {
-            padding: 16px;
+            padding: 20px;
+          }
+
+          .addresses-section {
+            margin-top: 24px;
           }
 
           .addresses-section h2 {
             font-size: 20px;
+            margin-bottom: 18px;
+          }
+
+          .empty-state {
+            padding: 50px 20px;
+            border-radius: 10px;
+            margin-top: 24px;
+          }
+
+          .empty-icon {
+            font-size: 56px;
+            margin-bottom: 14px;
+          }
+
+          .empty-state h3 {
+            font-size: 19px;
+            margin-bottom: 7px;
+          }
+
+          .empty-state p {
+            font-size: 15px;
+          }
+
+          .loading-state {
+            padding: 50px 20px;
+            border-radius: 10px;
+            margin-top: 24px;
+          }
+
+          .loading-state h3 {
+            font-size: 19px;
+            margin-bottom: 7px;
+          }
+
+          .loading-state p {
+            font-size: 15px;
+          }
+
+          .spinner {
+            margin-bottom: 22px;
+            width: 44px;
+            height: 44px;
+          }
+        }
+
+        /* Desktop styles (1024px+) */
+        @media (min-width: 1024px) {
+          .dashboard {
+            max-width: 1200px;
+            padding: 32px 24px;
+          }
+
+          .addresses-section {
+            margin-top: 32px;
+          }
+
+          .addresses-section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+          }
+
+          .empty-state {
+            padding: 60px 20px;
+            border-radius: 12px;
+            margin-top: 32px;
+          }
+
+          .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+          }
+
+          .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+          }
+
+          .empty-state p {
+            font-size: 16px;
+          }
+
+          .loading-state {
+            padding: 60px 20px;
+            border-radius: 12px;
+            margin-top: 32px;
+          }
+
+          .loading-state h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+          }
+
+          .loading-state p {
+            font-size: 16px;
+          }
+
+          .spinner {
+            margin-bottom: 24px;
+            width: 48px;
+            height: 48px;
+            border-width: 4px;
+          }
+        }
+
+        /* Large desktop styles (1280px+) */
+        @media (min-width: 1280px) {
+          .dashboard {
+            padding: 32px 16px;
           }
         }
       `}</style>
