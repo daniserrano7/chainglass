@@ -1,0 +1,124 @@
+/* Theme CSS Variables */
+
+/* Light Theme (Default) */
+:root,
+:root.light {
+  /* Background colors */
+  --color-background: 249 250 251; /* #f9fafb - light gray */
+  --color-background-secondary: 255 255 255; /* #ffffff - white */
+  --color-background-tertiary: 243 244 246; /* #f3f4f6 - lighter gray */
+  --color-background-hover: 229 231 235; /* #e5e7eb - hover state */
+  --color-background-active: 209 213 219; /* #d1d5db - active state */
+
+  /* Surface colors (for cards, panels) */
+  --color-surface: 255 255 255; /* #ffffff - white */
+  --color-surface-hover: 249 250 251; /* #f9fafb */
+  --color-surface-active: 243 244 246; /* #f3f4f6 */
+
+  /* Border colors */
+  --color-border: 229 231 235; /* #e5e7eb */
+  --color-border-hover: 209 213 219; /* #d1d5db */
+  --color-border-focus: 91 91 214; /* #5b5bd6 - brand color */
+
+  /* Text colors */
+  --color-text-primary: 17 24 39; /* #111827 - dark gray */
+  --color-text-secondary: 107 114 128; /* #6b7280 - medium gray */
+  --color-text-tertiary: 156 163 175; /* #9ca3af - light gray */
+  --color-text-inverse: 255 255 255; /* #ffffff - white (for dark backgrounds) */
+
+  /* Brand colors remain the same across themes */
+  --color-brand-50: 244 244 255;
+  --color-brand-100: 232 232 255;
+  --color-brand-200: 212 212 255;
+  --color-brand-300: 179 179 255;
+  --color-brand-400: 134 134 255;
+  --color-brand-500: 91 91 214;
+  --color-brand-600: 71 71 184;
+  --color-brand-700: 54 54 154;
+  --color-brand-800: 39 39 122;
+  --color-brand-900: 28 28 92;
+
+  /* Accent colors remain the same */
+  --color-accent-50: 230 252 255;
+  --color-accent-100: 204 249 255;
+  --color-accent-200: 153 243 255;
+  --color-accent-300: 102 235 255;
+  --color-accent-400: 51 227 255;
+  --color-accent-500: 0 217 255;
+  --color-accent-600: 0 184 217;
+  --color-accent-700: 0 151 179;
+  --color-accent-800: 0 118 140;
+  --color-accent-900: 0 85 102;
+
+  /* Semantic colors remain the same */
+  --color-success-50: 230 255 245;
+  --color-success-100: 204 255 235;
+  --color-success-200: 153 255 214;
+  --color-success-300: 102 255 194;
+  --color-success-400: 51 255 173;
+  --color-success-500: 0 230 153;
+  --color-success-600: 0 191 128;
+  --color-success-700: 0 153 102;
+  --color-success-800: 0 115 77;
+  --color-success-900: 0 77 51;
+
+  --color-warning-50: 255 251 235;
+  --color-warning-100: 255 245 204;
+  --color-warning-200: 255 235 153;
+  --color-warning-300: 255 224 102;
+  --color-warning-400: 255 214 51;
+  --color-warning-500: 255 204 0;
+  --color-warning-600: 217 173 0;
+  --color-warning-700: 179 143 0;
+  --color-warning-800: 140 112 0;
+  --color-warning-900: 102 82 0;
+
+  --color-error-50: 255 235 238;
+  --color-error-100: 255 204 212;
+  --color-error-200: 255 153 169;
+  --color-error-300: 255 102 126;
+  --color-error-400: 255 51 83;
+  --color-error-500: 255 0 51;
+  --color-error-600: 217 0 43;
+  --color-error-700: 179 0 36;
+  --color-error-800: 140 0 28;
+  --color-error-900: 102 0 20;
+}
+
+/* Dark Theme */
+:root.dark {
+  /* Background colors */
+  --color-background: 10 10 15; /* #0a0a0f - deep dark */
+  --color-background-secondary: 17 17 24; /* #111118 */
+  --color-background-tertiary: 23 23 31; /* #17171f */
+  --color-background-hover: 29 29 39; /* #1d1d27 */
+  --color-background-active: 35 35 47; /* #23232f */
+
+  /* Surface colors */
+  --color-surface: 23 23 31; /* #17171f */
+  --color-surface-hover: 29 29 39; /* #1d1d27 */
+  --color-surface-active: 35 35 47; /* #23232f */
+
+  /* Border colors */
+  --color-border: 42 42 53; /* #2a2a35 */
+  --color-border-hover: 58 58 72; /* #3a3a48 */
+  --color-border-focus: 91 91 214; /* #5b5bd6 */
+
+  /* Text colors */
+  --color-text-primary: 230 230 239; /* #e6e6ef - light */
+  --color-text-secondary: 153 153 168; /* #9999a8 - medium */
+  --color-text-tertiary: 107 107 122; /* #6b6b7a - dark */
+  --color-text-inverse: 10 10 15; /* #0a0a0f - dark (for light backgrounds) */
+
+  /* Brand, accent, and semantic colors remain the same as light theme */
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Disable transitions during page load */
+.preload * {
+  transition: none !important;
+}
