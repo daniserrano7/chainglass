@@ -2,20 +2,37 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus, AlertCircle } from "lucide-react"
+import { isValidAddress } from "@/services/rpcService"
 
 interface AddAddressFormProps {
   onAdd?: (address: string, label: string) => void
+  isLoading?: boolean
 }
 
-export function AddAddressForm({ onAdd }: AddAddressFormProps) {
+export function AddAddressForm({ onAdd, isLoading = false }: AddAddressFormProps) {
   const [address, setAddress] = useState("")
   const [label, setLabel] = useState("")
+  const [error, setError] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (address && onAdd) {
-      onAdd(address, label)
+    setError("")
+
+    // Validate address
+    if (!address.trim()) {
+      setError("Please enter an address")
+      return
+    }
+
+    if (!isValidAddress(address.trim())) {
+      setError("Invalid Ethereum address format")
+      return
+    }
+
+    // Call onAdd if provided
+    if (onAdd) {
+      onAdd(address.trim(), label.trim())
       setAddress("")
       setLabel("")
     }
@@ -60,9 +77,25 @@ export function AddAddressForm({ onAdd }: AddAddressFormProps) {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={!address}>
-            <Plus className="w-4 h-4" />
-            Add & Scan Address
+          {error && (
+            <div className="flex items-center gap-2 text-sm text-red-400 bg-red-950/20 border border-red-900/30 rounded-lg px-3 py-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" disabled={!address || isLoading}>
+            {isLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Scanning...
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                Add & Scan Address
+              </>
+            )}
           </Button>
         </form>
       </CardContent>

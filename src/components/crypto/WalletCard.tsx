@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { NetworkBadge } from "./NetworkBadge"
 import { TokenIcon } from "./TokenIcon"
 import { formatCurrency, truncateAddress, formatTokenAmount } from "@/lib/utils"
-import { Wallet, RefreshCw, Trash2 } from "lucide-react"
+import { Wallet, RefreshCw, Trash2, Loader2, AlertCircle } from "lucide-react"
 
 interface TokenBalance {
   symbol: string
@@ -16,6 +16,8 @@ interface NetworkBalance {
   nativeToken: TokenBalance
   tokens: TokenBalance[]
   totalValue: number
+  isLoading?: boolean
+  error?: string
 }
 
 interface WalletCardProps {
