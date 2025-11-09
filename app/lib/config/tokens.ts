@@ -1,4 +1,5 @@
 import type { Token } from "../types";
+import { getCustomTokensForNetwork } from "../services/storage";
 
 /**
  * Common ERC-20 tokens per network
@@ -207,10 +208,44 @@ export const NETWORK_TOKENS: Record<string, Token[]> = {
 };
 
 /**
- * Get tokens for a specific network
+ * Get tokens for a specific network (includes custom tokens)
  */
 export function getTokensForNetwork(networkId: string): Token[] {
-  return NETWORK_TOKENS[networkId] || [];
+  const defaultTokens = NETWORK_TOKENS[networkId] || [];
+  const customTokens = getCustomTokensForNetwork(networkId);
+
+  // Merge default and custom tokens, avoiding duplicates by address
+  const tokensMap = new Map<string, Token>();
+
+  // Add default tokens first
+  defaultTokens.forEach((token) => {
+    tokensMap.set(token.address.toLowerCase(), token);
+  });
+
+  // Add custom tokens (will override defaults with same address)
+  customTokens.forEach((token) => {
+    tokensMap.set(token.address.toLowerCase(), token);
+  });
+
+  return Array.from(tokensMap.values());
+}
+
+/**
+ * Get all tokens for a network (both default and custom)
+ */
+export function getAllTokensForNetwork(networkId: string): {
+  default: Token[];
+  custom: Token[];
+  all: Token[];
+} {
+  const defaultTokens = NETWORK_TOKENS[networkId] || [];
+  const customTokens = getCustomTokensForNetwork(networkId);
+
+  return {
+    default: defaultTokens,
+    custom: customTokens,
+    all: getTokensForNetwork(networkId),
+  };
 }
 
 /**

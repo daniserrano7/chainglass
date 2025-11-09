@@ -5,6 +5,8 @@ import { AddAddressForm } from "~/components/AddAddressForm";
 import { AddressCard } from "~/components/AddressCard";
 import { PortfolioSummary } from "~/components/PortfolioSummary";
 import { ScanProgress } from "~/components/ScanProgress";
+import { NetworkManager } from "~/components/NetworkManager";
+import { TokenManager } from "~/components/TokenManager";
 import {
   getWatchedAddresses,
   addWatchedAddress,
@@ -217,6 +219,30 @@ export default function Index() {
 
       {/* Add Address Form */}
       <AddAddressForm onAddAddress={handleAddAddress} isLoading={isLoading} />
+
+      {/* Network Manager */}
+      <NetworkManager
+        onNetworkAdded={(network) => {
+          console.log("Network added:", network);
+          // Rescan all addresses to fetch balances for the new network
+          const addresses = getWatchedAddresses();
+          addresses.forEach((addr) => {
+            scanAddress(addr, false);
+          });
+        }}
+      />
+
+      {/* Token Manager */}
+      <TokenManager
+        onTokenAdded={(token) => {
+          console.log("Token added:", token);
+          // Rescan all addresses to fetch balances for the new token
+          const addresses = getWatchedAddresses();
+          addresses.forEach((addr) => {
+            scanAddress(addr, false);
+          });
+        }}
+      />
 
       {/* Error Message */}
       {error && (

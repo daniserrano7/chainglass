@@ -2,6 +2,8 @@ import { useState } from "react"
 import { PortfolioSummary } from "./components/crypto/PortfolioSummary"
 import { AddAddressForm } from "./components/crypto/AddAddressForm"
 import { WalletCard } from "./components/crypto/WalletCard"
+import { NetworkManager } from "./components/crypto/NetworkManager"
+import { TokenManager } from "./components/crypto/TokenManager"
 import { Eye } from "lucide-react"
 
 // Mock data for demonstration
@@ -163,6 +165,32 @@ function App() {
               onAdd={(address, label) => {
                 console.log("Adding address:", address, label)
                 // In a real app, this would trigger the scanning process
+              }}
+            />
+          </section>
+
+          {/* Network Manager */}
+          <section className="animate-fade-in" style={{ animationDelay: "0.15s" }}>
+            <NetworkManager
+              onNetworkAdded={(network) => {
+                console.log("Network added:", network)
+                // Trigger a rescan of all addresses to fetch balances for the new network
+                wallets.forEach((wallet) => {
+                  console.log("Rescanning address for new network:", wallet.address, network.name)
+                })
+              }}
+            />
+          </section>
+
+          {/* Token Manager */}
+          <section className="animate-fade-in" style={{ animationDelay: "0.2s" }}>
+            <TokenManager
+              onTokenAdded={(token) => {
+                console.log("Token added:", token)
+                // Trigger a rescan of all addresses to fetch balances for the new token
+                wallets.forEach((wallet) => {
+                  console.log("Rescanning address for new token:", wallet.address, token.symbol)
+                })
               }}
             />
           </section>
