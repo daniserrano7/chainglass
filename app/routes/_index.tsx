@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { MetaFunction, LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
-import { json, useLoaderData, useActionData, useNavigation, useRevalidator } from "react-router";
+import { useLoaderData, useActionData, useNavigation, useRevalidator } from "react-router";
 import type { ChainFamily, AddressPortfolio, WatchedAddress, Network } from "~/lib/types";
 import { AddAddressForm } from "~/components/AddAddressForm";
 import { AddressCard } from "~/components/AddressCard";
@@ -51,22 +51,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const addresses = getWatchedAddressesFromCookies(request);
 
   if (addresses.length === 0) {
-    return json({
+    return {
       portfolios: [],
       addresses: [],
       loadedFromCache: false,
-    });
+    };
   }
 
   // Pre-fetch all balances in parallel using server cache
   const portfolioResults = await Promise.allSettled(
     addresses.map(async (addr) => {
       try {
+        const networksForFamily = getEnabledNetworksForFamily(addr.chainFamily);
         const result = await scanAddress(addr.address, {
           forceRefresh: false, // Use cache when available
-          networksToScan: getEnabledNetworksForFamily(addr.chainFamily).map(
-            (n) => n.id
-          ),
+          networksToScan: networksForFamily || [],
         });
 
         // Convert to AddressPortfolio format
@@ -76,6 +75,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           label: addr.label,
           networkBalances: result.balances,
           totalUsdValue: result.totalUsdValue,
+          lastScanned: Date.now(),
         };
 
         return portfolio;
@@ -88,6 +88,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           label: addr.label,
           networkBalances: [],
           totalUsdValue: 0,
+          lastScanned: Date.now(),
         } as AddressPortfolio;
       }
     })
@@ -98,11 +99,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .filter((r) => r.status === "fulfilled")
     .map((r) => (r as PromiseFulfilledResult<AddressPortfolio>).value);
 
-  return json({
+  return {
     portfolios,
     addresses,
     loadedFromCache: true,
-  });
+  };
 }
 
 /**
@@ -122,9 +123,9 @@ export async function action({ request }: ActionFunctionArgs) {
       const label = formData.get("label") as string | undefined;
 
       if (!address || !chainFamily) {
-        return json(
-          { error: "Address and chain family are required" },
-          { status: 400 }
+        return new Response(
+          JSON.stringify({ error: "Address and chain family are required" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
         );
       }
 
@@ -142,10 +143,17 @@ export async function action({ request }: ActionFunctionArgs) {
       addresses.push(newAddress);
 
       // Update cookies and return
-      const headers = createAddressesCookieHeaders(addresses);
-      return json(
-        { success: true, address: newAddress },
-        { headers: { "Set-Cookie": headers } }
+      const cookieHeaders = createAddressesCookieHeaders(addresses);
+      const responseHeaders = new Headers();
+      responseHeaders.set("Content-Type", "application/json");
+      cookieHeaders.forEach(cookie => responseHeaders.append("Set-Cookie", cookie));
+
+      return new Response(
+        JSON.stringify({ success: true, address: newAddress }),
+        {
+          status: 200,
+          headers: responseHeaders
+        }
       );
     }
 
@@ -153,17 +161,27 @@ export async function action({ request }: ActionFunctionArgs) {
       const addressId = formData.get("addressId") as string;
 
       if (!addressId) {
-        return json({ error: "Address ID is required" }, { status: 400 });
+        return new Response(
+          JSON.stringify({ error: "Address ID is required" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
       }
 
       // Remove from addresses array
       addresses = addresses.filter((a) => a.id !== addressId);
 
       // Update cookies and return
-      const headers = createAddressesCookieHeaders(addresses);
-      return json(
-        { success: true, addressId },
-        { headers: { "Set-Cookie": headers } }
+      const cookieHeaders = createAddressesCookieHeaders(addresses);
+      const responseHeaders = new Headers();
+      responseHeaders.set("Content-Type", "application/json");
+      cookieHeaders.forEach(cookie => responseHeaders.append("Set-Cookie", cookie));
+
+      return new Response(
+        JSON.stringify({ success: true, addressId }),
+        {
+          status: 200,
+          headers: responseHeaders
+        }
       );
     }
 
@@ -172,21 +190,26 @@ export async function action({ request }: ActionFunctionArgs) {
       const forceRefresh = formData.get("forceRefresh") === "true";
 
       if (!addressId) {
-        return json({ error: "Address ID is required" }, { status: 400 });
+        return new Response(
+          JSON.stringify({ error: "Address ID is required" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
       }
 
       const address = addresses.find((a) => a.id === addressId);
       if (!address) {
-        return json({ error: "Address not found" }, { status: 404 });
+        return new Response(
+          JSON.stringify({ error: "Address not found" }),
+          { status: 404, headers: { "Content-Type": "application/json" } }
+        );
       }
 
       // Rescan the address
       try {
+        const networksForFamily = getEnabledNetworksForFamily(address.chainFamily);
         const result = await scanAddress(address.address, {
           forceRefresh,
-          networksToScan: getEnabledNetworksForFamily(
-            address.chainFamily
-          ).map((n) => n.id),
+          networksToScan: networksForFamily || [],
         });
 
         const portfolio: AddressPortfolio = {
@@ -195,23 +218,27 @@ export async function action({ request }: ActionFunctionArgs) {
           label: address.label,
           networkBalances: result.balances,
           totalUsdValue: result.totalUsdValue,
+          lastScanned: Date.now(),
         };
 
-        return json({ success: true, portfolio });
+        return { success: true, portfolio };
       } catch (error) {
         console.error(`Failed to rescan address ${address.address}:`, error);
-        return json(
-          {
+        return new Response(
+          JSON.stringify({
             error:
               error instanceof Error ? error.message : "Failed to rescan",
-          },
-          { status: 500 }
+          }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
         );
       }
     }
 
     default:
-      return json({ error: "Invalid action" }, { status: 400 });
+      return new Response(
+        JSON.stringify({ error: "Invalid action" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
   }
 }
 
@@ -234,7 +261,7 @@ export default function Index() {
 
   // Client-side state for UI only
   const [portfolios, setPortfolios] = useState<AddressPortfolio[]>(
-    loaderData.portfolios
+    loaderData?.portfolios || []
   );
   const [scanState, setScanState] = useState<ScanState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -242,7 +269,9 @@ export default function Index() {
 
   // Sync loader data to state when it changes
   useEffect(() => {
-    setPortfolios(loaderData.portfolios);
+    if (loaderData?.portfolios) {
+      setPortfolios(loaderData.portfolios);
+    }
   }, [loaderData]);
 
   // Migration: Sync localStorage to cookies on first visit
@@ -268,14 +297,14 @@ export default function Index() {
           }, 100);
         } else if (
           localAddresses.length === 0 &&
-          loaderData.addresses.length > 0
+          (loaderData?.addresses.length || 0) > 0
         ) {
           // Reverse sync: cookies exist but localStorage is empty
           // Sync from cookies to localStorage
           console.log(
-            `Syncing ${loaderData.addresses.length} addresses from cookies to localStorage...`
+            `Syncing ${loaderData?.addresses.length} addresses from cookies to localStorage...`
           );
-          loaderData.addresses.forEach((addr) => {
+          loaderData?.addresses.forEach((addr: WatchedAddress) => {
             addWatchedAddressLocal(addr);
           });
         }
@@ -288,7 +317,7 @@ export default function Index() {
     };
 
     syncLocalStorageToCookies();
-  }, [cookiesSynced, loaderData.addresses, revalidator]);
+  }, [cookiesSynced, loaderData?.addresses, revalidator]);
 
   // Client-side scanning for progress UI (when user manually adds/rescans)
   const scanAddressClient = async (
@@ -391,7 +420,7 @@ export default function Index() {
       addWatchedAddressLocal(watchedAddress);
 
       // Sync to cookies client-side (for immediate cookie update)
-      const updatedAddresses = [...loaderData.addresses, watchedAddress];
+      const updatedAddresses = [...(loaderData?.addresses || []), watchedAddress];
       syncAddressesToCookies(updatedAddresses);
 
       // Submit to server action to confirm
@@ -420,8 +449,8 @@ export default function Index() {
   };
 
   const handleRescan = async (addressId: string) => {
-    const watchedAddress = loaderData.addresses.find(
-      (a) => a.id === addressId
+    const watchedAddress = loaderData?.addresses.find(
+      (a: WatchedAddress) => a.id === addressId
     );
 
     if (!watchedAddress) {
@@ -451,9 +480,9 @@ export default function Index() {
       removeWatchedAddressLocal(addressId);
 
       // Sync to cookies client-side (for immediate cookie update)
-      const updatedAddresses = loaderData.addresses.filter(
-        (a) => a.id !== addressId
-      );
+      const updatedAddresses = loaderData?.addresses.filter(
+        (a: WatchedAddress) => a.id !== addressId
+      ) || [];
       syncAddressesToCookies(updatedAddresses);
 
       // Submit to server action to remove from cookies
@@ -534,7 +563,7 @@ export default function Index() {
           onNetworkAdded={(network) => {
             console.log("Network added:", network);
             // Rescan all addresses to fetch balances for the new network
-            loaderData.addresses.forEach((addr) => {
+            loaderData?.addresses.forEach((addr: WatchedAddress) => {
               scanAddressClient(addr, false);
             });
             // Revalidate to refresh data
@@ -555,7 +584,7 @@ export default function Index() {
           onTokenAdded={(token) => {
             console.log("Token added:", token);
             // Rescan all addresses to fetch balances for the new token
-            loaderData.addresses.forEach((addr) => {
+            loaderData?.addresses.forEach((addr: WatchedAddress) => {
               scanAddressClient(addr, false);
             });
             // Revalidate to refresh data
